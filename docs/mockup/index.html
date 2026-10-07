@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Olive Storage - design mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ec; --card:#ffffff; --ink:#1f2a1a; --muted:#6b7565; --line:#e7e3d4;
+  --olive:#4a6b2a; --olive-d:#385220; --olive-l:#e8f0dc;
+  --green:#1f8f4e; --green-l:#e1f5e9; --red:#d23b3b; --red-l:#fde8e8; --amber:#c98a0a; --amber-l:#fff3d6;
+  --r:18px; --shadow:0 1px 2px rgba(30,40,20,.06),0 8px 24px rgba(30,40,20,.06);
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Noto Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:18px;line-height:1.5}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+/* sidebar */
+.side{background:var(--olive-d);color:#fff;padding:24px 16px;display:flex;flex-direction:column;gap:8px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:22px;padding:4px 12px 24px}
+.brand .logo{width:44px;height:44px;border-radius:14px;background:#fff2;display:grid;place-items:center;font-size:26px}
+.nav{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;color:#e6efd9;font-weight:500;cursor:pointer;border:0;background:none;font:inherit;text-align:start;width:100%}
+.nav .ic{font-size:22px;width:28px;text-align:center}
+.nav:hover{background:#ffffff14}
+.nav.on{background:#fff;color:var(--olive-d);font-weight:700}
+.spacer{flex:1}
+.lang{display:flex;gap:6px;background:#0003;border-radius:12px;padding:4px}
+.lang span{flex:1;text-align:center;padding:8px;border-radius:9px;font-size:15px;cursor:pointer}
+.lang .on{background:#fff;color:var(--olive-d);font-weight:700}
+/* main */
+main{padding:32px 40px;max-width:1100px;width:100%}
+h1{font-size:30px;font-weight:800;margin-bottom:4px}
+.sub{color:var(--muted);margin-bottom:24px}
+.screen{display:none}.screen.on{display:block}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:24px}
+.row{display:flex;gap:16px;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+/* controls */
+.search{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:14px}
+.search input{border:0;outline:0;font:inherit;flex:1;background:none}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.chip{padding:10px 18px;border-radius:999px;background:#fff;border:2px solid var(--line);font-weight:500;cursor:pointer}
+.chip.on{background:var(--olive);border-color:var(--olive);color:#fff;font-weight:700}
+.items{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.item{background:#fff;border:2px solid var(--line);border-radius:16px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:.15s}
+.item:hover{border-color:var(--olive);transform:translateY(-2px)}
+.item.sel{border-color:var(--olive);background:var(--olive-l)}
+.item b{font-size:19px}
+.item small{color:var(--muted);font-size:15px}
+.price{font-weight:800;color:var(--olive-d)}
+.tag{display:inline-block;padding:3px 12px;border-radius:999px;font-size:14px;font-weight:700}
+.t-g{background:var(--green-l);color:var(--green)} .t-r{background:var(--red-l);color:var(--red)} .t-a{background:var(--amber-l);color:var(--amber)}
+label{display:block;font-weight:700;margin:14px 0 6px}
+.field{width:100%;padding:14px 16px;border-radius:14px;border:2px solid var(--line);font:inherit;background:#fff}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:56px;height:56px;border-radius:16px;border:2px solid var(--line);background:#fff;font-size:28px;cursor:pointer}
+.stepper .field{text-align:center;font-size:24px;font-weight:800}
+.totalbox{background:var(--olive-l);border-radius:16px;padding:18px;margin:18px 0}
+.totalbox .big{font-size:36px;font-weight:800;color:var(--olive-d)}
+.line{display:flex;justify-content:space-between;padding:6px 0;color:var(--muted)}
+.line.debt{color:var(--red);font-weight:700}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:18px;font:inherit;font-size:20px;font-weight:800;cursor:pointer;background:var(--olive);color:#fff;box-shadow:0 6px 16px rgba(74,107,42,.35)}
+.btn:hover{background:var(--olive-d)}
+.btn.sec{background:#fff;color:var(--olive-d);border:2px solid var(--olive);box-shadow:none}
+.btn.inline{display:inline-block;width:auto;padding:14px 26px}
+/* table */
+table{width:100%;border-collapse:collapse}
+th{text-align:start;color:var(--muted);font-weight:500;font-size:15px;padding:10px 12px;border-bottom:2px solid var(--line)}
+td{padding:16px 12px;border-bottom:1px solid var(--line)}
+tr:hover td{background:#faf9f3}
+.num{font-weight:700;font-variant-numeric:tabular-nums}
+.stat{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+.stat .l{color:var(--muted);font-size:16px}
+.stat .v{font-size:28px;font-weight:800;margin-top:4px}
+.stat .d{font-size:14px;margin-top:2px}
+.bars{display:flex;align-items:flex-end;gap:14px;height:200px;padding-top:10px}
+.bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:flex-end;height:100%}
+.bars i{display:block;width:100%;border-radius:10px 10px 4px 4px;background:linear-gradient(var(--olive),#7b9d4e)}
+.bars span{font-size:14px;color:var(--muted)}
+.hint{display:flex;gap:10px;align-items:center;background:var(--amber-l);color:#7a5200;border-radius:14px;padding:12px 16px;margin-bottom:16px;font-size:16px}
+.pin{display:flex;gap:12px;justify-content:center;margin:16px 0}
+.pin span{width:56px;height:64px;border-radius:14px;border:2px solid var(--line);display:grid;place-items:center;font-size:28px;font-weight:800;background:#fff}
+.note{margin-top:28px;font-size:14px;color:var(--muted);text-align:center;direction:ltr}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo">🫒</div><div>کۆگای زەیتوون</div></div>
+    <button class="nav on" data-s="sell"><span class="ic">🛒</span>فرۆشتن</button>
+    <button class="nav" data-s="stock"><span class="ic">📦</span>کۆگا</button>
+    <button class="nav" data-s="debt"><span class="ic">🧾</span>قەرزەکان</button>
+    <button class="nav" data-s="cost"><span class="ic">💡</span>خەرجی مانگانە</button>
+    <button class="nav" data-s="dash"><span class="ic">📊</span>داشبۆرد <span style="margin-inline-start:auto">🔒</span></button>
+    <div class="spacer"></div>
+    <div class="lang"><span class="on">کوردی</span><span>العربية</span></div>
+  </aside>
+
+  <main>
+  <!-- SELL -->
+  <section class="screen on" id="sell">
+    <h1>فرۆشتن</h1><p class="sub">کاڵا هەڵبژێرە، بڕ بنووسە، تەواو.</p>
+    <div class="grid2">
+      <div>
+        <div class="search">🔍<input placeholder="بگەڕێ بۆ کاڵا..."></div>
+        <div class="chips"><span class="chip on">هەموو</span><span class="chip">زەیتوون</span><span class="chip">زەیت</span><span class="chip">تورشی</span><span class="chip">قاپ و بۆتڵ</span></div>
+        <div class="items">
+          <div class="item sel"><b>زەیتوونی ڕەش</b><small>٤٢٠ کیلۆ لە کۆگا</small><span class="price">٧,٥٠٠ د.ع / کیلۆ</span></div>
+          <div class="item"><b>زەیتوونی سەوز</b><small>١٨٠ کیلۆ لە کۆگا</small><span class="price">٦,٠٠٠ د.ع / کیلۆ</span></div>
+          <div class="item"><b>زەیتی زەیتوون</b><small>٣٥ تەنەکە لە کۆگا</small><span class="price">٤٥,٠٠٠ د.ع / تەنەکە</span></div>
+          <div class="item"><b>تورشی تێکەڵ</b><small>٨ کیلۆ <span class="tag t-a">کەم ماوە</span></small><span class="price">٤,٠٠٠ د.ع / کیلۆ</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <b style="font-size:20px">زەیتوونی ڕەش</b>
+        <label>بڕ (کیلۆ)</label>
+        <div class="stepper"><button>−</button><input class="field" value="٢٥"><button>+</button></div>
+        <label>نرخی فرۆشتن (دەتوانیت بیگۆڕیت)</label>
+        <input class="field" value="٧,٥٠٠ د.ع">
+        <label>کڕیار</label>
+        <input class="field" value="ئاسۆ محمد">
+        <div class="totalbox">
+          <div class="line"><span>کۆی گشتی</span></div>
+          <div class="big">١٨٧,٥٠٠ د.ع</div>
+        </div>
+        <label>چەندی دا؟</label>
+        <input class="field" value="١٠٠,٠٠٠ د.ع">
+        <div class="line debt" style="margin:12px 0"><span>قەرز دەمێنێتەوە</span><span>٨٧,٥٠٠ د.ع</span></div>
+        <button class="btn">✓ فرۆشتن تۆمار بکە</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STOCK -->
+  <section class="screen" id="stock">
+    <div class="row" style="justify-content:space-between;align-items:center"><div><h1>کۆگا</h1><p class="sub">هەموو ئەوەی هەتە، ڕیزبەندکراو بە پۆل.</p></div><button class="btn inline">＋ کاڵای نوێ</button></div>
+    <div class="search">🔍<input placeholder="بگەڕێ بۆ کاڵا..."></div>
+    <div class="chips"><span class="chip on">هەموو</span><span class="chip">زەیتوون</span><span class="chip">زەیت</span><span class="chip">تورشی</span><span class="chip">قاپ و بۆتڵ</span><span class="chip" style="border-style:dashed">＋ پۆلی نوێ</span></div>
+    <div class="card" style="padding:8px 16px">
+      <table>
+        <tr><th>کاڵا</th><th>پۆل</th><th>ماوە</th><th>نرخی کڕین</th><th>نرخی فرۆشتن</th><th></th></tr>
+        <tr><td><b>زەیتوونی ڕەش</b></td><td>زەیتوون</td><td class="num">٤٢٠ کیلۆ <span class="tag t-g">باشە</span></td><td class="num">٥,٨٠٠</td><td class="num">٧,٥٠٠</td><td>✏️</td></tr>
+        <tr><td><b>زەیتوونی سەوز</b></td><td>زەیتوون</td><td class="num">١٨٠ کیلۆ <span class="tag t-g">باشە</span></td><td class="num">٤,٦٠٠</td><td class="num">٦,٠٠٠</td><td>✏️</td></tr>
+        <tr><td><b>زەیتی زەیتوون</b></td><td>زەیت</td><td class="num">٣٥ تەنەکە <span class="tag t-g">باشە</span></td><td class="num">٣٦,٠٠٠</td><td class="num">٤٥,٠٠٠</td><td>✏️</td></tr>
+        <tr><td><b>تورشی تێکەڵ</b></td><td>تورشی</td><td class="num">٨ کیلۆ <span class="tag t-a">کەم ماوە</span></td><td class="num">٢,٨٠٠</td><td class="num">٤,٠٠٠</td><td>✏️</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- DEBTS -->
+  <section class="screen" id="debt">
+    <h1>قەرزەکان</h1><p class="sub">کێ قەرزداره و چەندی ماوە.</p>
+    <div class="grid4" style="grid-template-columns:repeat(2,1fr)">
+      <div class="stat"><div class="l">کۆی قەرزەکان</div><div class="v" style="color:var(--red)">٣,٢٤٠,٠٠٠ د.ع</div></div>
+      <div class="stat"><div class="l">کڕیاری قەرزدار</div><div class="v">١٢</div></div>
+    </div>
+    <div class="card" style="padding:8px 16px">
+      <table>
+        <tr><th>کڕیار</th><th>دوایین کڕین</th><th>قەرز</th><th></th></tr>
+        <tr><td><b>ئاسۆ محمد</b></td><td>ئەمڕۆ</td><td class="num" style="color:var(--red)">٨٧,٥٠٠ د.ع</td><td><button class="btn inline sec" style="padding:10px 20px;font-size:16px">پارەدان</button></td></tr>
+        <tr><td><b>شاناز ئەحمەد</b></td><td>٣ ڕۆژ لەمەوبەر</td><td class="num" style="color:var(--red)">٤٥٠,٠٠٠ د.ع</td><td><button class="btn inline sec" style="padding:10px 20px;font-size:16px">پارەدان</button></td></tr>
+        <tr><td><b>هەڵمەت کەریم</b></td><td>هەفتەیەک لەمەوبەر</td><td class="num" style="color:var(--red)">١,٢٠٠,٠٠٠ د.ع</td><td><button class="btn inline sec" style="padding:10px 20px;font-size:16px">پارەدان</button></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- COSTS -->
+  <section class="screen" id="cost">
+    <h1>خەرجی مانگانە</h1><p class="sub">تەنها سێ شت: کارەبا، کرێکاران، شوێن.</p>
+    <div class="row" style="margin-bottom:16px"><span class="chip">تشرینی یەکەم ٢٠٢٦</span><span class="chip on">تشرینی دووەم ٢٠٢٦</span></div>
+    <div class="card" style="max-width:560px">
+      <label>💡 کارەبا</label><input class="field" value="١٨٠,٠٠٠ د.ع">
+      <label>👷 کرێکاران (کۆی مانگ)</label><input class="field" value="١,٥٠٠,٠٠٠ د.ع">
+      <label>🏠 شوێن / کرێ</label><input class="field" value="٨٠٠,٠٠٠ د.ع">
+      <div class="totalbox"><div class="line"><span>کۆی خەرجی ئەم مانگە</span></div><div class="big">٢,٤٨٠,٠٠٠ د.ع</div></div>
+      <button class="btn">پاشەکەوت بکە</button>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="screen" id="dash">
+    <h1>داشبۆرد</h1><p class="sub">تەنها خاوەنکار دەیبینێت · تشرینی دووەم ٢٠٢٦</p>
+    <div class="grid4">
+      <div class="stat"><div class="l">فرۆشتن</div><div class="v">١٢,٤٠٠,٠٠٠</div><div class="d" style="color:var(--green)">▲ ١٨٪ لە مانگی پێشوو</div></div>
+      <div class="stat"><div class="l">قازانجی خاوێن</div><div class="v" style="color:var(--green)">٣,١٢٠,٠٠٠</div><div class="d" style="color:var(--muted)">دوای خەرجییەکان</div></div>
+      <div class="stat"><div class="l">نرخی کۆگا</div><div class="v">٨,٩٥٠,٠٠٠</div><div class="d" style="color:var(--muted)">بە نرخی کڕین</div></div>
+      <div class="stat"><div class="l">قەرزی کڕیاران</div><div class="v" style="color:var(--red)">٣,٢٤٠,٠٠٠</div><div class="d" style="color:var(--muted)">١٢ کڕیار</div></div>
+    </div>
+    <div class="grid2" style="grid-template-columns:1.5fr 1fr">
+      <div class="card"><b>فرۆشتنی ٦ مانگی ڕابردوو</b>
+        <div class="bars"><div><i style="height:45%"></i><span>ئاب</span></div><div><i style="height:60%"></i><span>ئەیلوول</span></div><div><i style="height:52%"></i><span>تشرین ١</span></div><div><i style="height:80%"></i><span>تشرین ٢</span></div><div><i style="height:68%"></i><span>کانوون ١</span></div><div><i style="height:90%"></i><span>کانوون ٢</span></div></div>
+      </div>
+      <div class="card"><b>باشترین کاڵاکان</b>
+        <div class="line" style="margin-top:12px"><span>زەیتوونی ڕەش</span><b class="num" style="color:var(--ink)">٤٢٪</b></div>
+        <div class="line"><span>زەیتی زەیتوون</span><b class="num" style="color:var(--ink)">٣١٪</b></div>
+        <div class="line"><span>زەیتوونی سەوز</span><b class="num" style="color:var(--ink)">١٩٪</b></div>
+        <div class="line"><span>تورشی</span><b class="num" style="color:var(--ink)">٨٪</b></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;max-width:420px;text-align:center"><b>🔒 کۆدی خاوەنکار</b><div class="pin"><span>•</span><span>•</span><span>•</span><span>•</span></div><small style="color:var(--muted)">ئەمە دیزاینی پێش کردنەوەی داشبۆردە</small></div>
+  </section>
+
+  <p class="note">Design mockup only (sample data). Real app comes after approval.</p>
+  </main>
+</div>
+<script>
+document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.nav').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s));
+});
+document.querySelectorAll('.item').forEach(i=>i.onclick=()=>{document.querySelectorAll('.item').forEach(x=>x.classList.remove('sel'));i.classList.add('sel')});
+document.querySelectorAll('.chips .chip').forEach(c=>c.onclick=()=>{c.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on')});
+</script>
+</body>
+</html>
