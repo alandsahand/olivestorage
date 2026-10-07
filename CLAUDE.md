@@ -10,6 +10,14 @@ A simple "olive storage" app, built by the owner on a PC. It is a small, easy pr
 - The project folder must be kept identical across PCs (synced folder such as OneDrive/Google Drive, or copy it).
 - Planning started in a claude.ai chat linked to the "storage" Project; development continues in Claude Code.
 
+## Starting on another PC (do this every time)
+1. First time only: `git clone https://github.com/alandsahand/olivestorage.git` (sign in to GitHub when asked). If you copied the folder instead, delete `node_modules` and `src-tauri\target` from the copy first.
+2. Double-click `setup.cmd` (installs/checks Git, Node, Rust, C++ Build Tools, WebView2, then `npm install`). Click Yes on admin prompts.
+3. Every session start: `git pull`, then open Claude Code in the folder and say "read CLAUDE.md and continue".
+4. Run the app: `npm run tauri dev` (first Rust build ~3 min).
+5. Every session end: Claude updates CLAUDE.md, then `git add -A`, commit, `git push`.
+The database is per-PC and is not in git.
+
 ## Rules for Claude in this project
 1. At the START of every session, read this file and continue from "Next steps".
 2. At the END of every session (or when asked), update "Decisions", "Done" and "Next steps" below.
