@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "@fontsource/noto-sans-arabic/400.css";
+@import "@fontsource/noto-sans-arabic/500.css";
+@import "@fontsource/noto-sans-arabic/700.css";
+@import "@fontsource/noto-sans-arabic/800.css";
+
+@theme {
+  --font-sans: "Noto Sans Arabic", system-ui, sans-serif;
+  --color-bg: #f6f4ec;
+  --color-ink: #1f2a1a;
+  --color-muted: #6b7565;
+  --color-line: #e7e3d4;
+  --color-olive: #4a6b2a;
+  --color-olive-d: #385220;
+  --color-olive-l: #e8f0dc;
+  --color-good: #1f8f4e;
+  --color-good-l: #e1f5e9;
+  --color-bad: #d23b3b;
+  --color-bad-l: #fde8e8;
+  --color-warn: #c98a0a;
+  --color-warn-l: #fff3d6;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.5;
+}

@@ -36,11 +36,16 @@ A simple "olive storage" app, built by the owner on a PC. It is a small, easy pr
 ## Done
 - Nothing built yet. Environment installed (Node, Rust, Git, C++ Build Tools, WebView2), setup.cmd written, GitHub repo alandsahand/olivestorage connected and first commit pushed.
 - Flow chart written: docs/flow.md (answers recorded).
+- Step 1 scaffold DONE and running: Tauri 2 + React 19 + Vite + TS + Tailwind 4, RTL Kurdish/Arabic switch (src/i18n.tsx), sidebar + 5 placeholder pages (src/App.tsx), SQLite via tauri-plugin-sql with migrations in src-tauri/src/lib.rs (migration 1 = settings table), DB connected and verified.
+- Mockup sell screen updated: client first, several items, print button (coming soon).
 - UI mockup (Kurdish, RTL, olive green on cream, 5 screens): docs/mockup/index.html. Owner approved the look, edits to come.
 
 ## Next steps
 0. On every PC, run `setup.cmd` (calls scripts/setup.ps1): checks/installs Git, Node, Rust, MSVC C++ Build Tools, WebView2, then npm install. First PC status: Node, Rust, WebView2 OK; Git and C++ Build Tools failed because the admin (UAC) prompt was cancelled — re-run setup.cmd by double-clicking and click Yes.
 1. (done) Flow reviewed, questions answered.
 2. (done, small edits pending) UI mockup docs/mockup/index.html — owner likes it. Collect the owner's edit list and apply to the mockup.
-3. Propose a minimal first version (MVP), get approval.
-4. Scaffold the project (Tauri + React + Vite + TS + SQLite) and update this file.
+3. (done) MVP plan approved: docs/build-plan.md. Database stays per-PC (not synced), owner OK with it (all PCs are dev PCs).
+4. (done) Step 0 + Step 1 of build plan.
+5. NEXT: Step 2 — Settings + Stock (units, categories, items, receive goods, search + category chips, edit/cancel). Then steps 3-8 in order; owner tests each step before the next.
+
+How to run: `npm install` then `npm run tauri dev` (first Rust build ~3 min). DB file: %APPDATA%\com.olivestorage.app\olivestorage.db.
