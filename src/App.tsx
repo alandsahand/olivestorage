@@ -6,6 +6,7 @@ import { checkDb } from "@/db";
 import Stock from "@/pages/Stock";
 import Sell from "@/pages/Sell";
 import Debts from "@/pages/Debts";
+import Costs from "@/pages/Costs";
 
 type Page = { path: string; key: Key; icon: LucideIcon; locked?: boolean };
 
@@ -102,6 +103,8 @@ export default function App() {
                     <Sell />
                   ) : p.path === "/debts" ? (
                     <Debts />
+                  ) : p.path === "/costs" ? (
+                    <Costs />
                   ) : (
                     <Placeholder title={p.key} />
                   )

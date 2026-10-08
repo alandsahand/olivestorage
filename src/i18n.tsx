@@ -117,6 +117,21 @@ const ckb = {
   refundDueTag: "دەبێت بگەڕێتەوە",
   noRecords: "هیچ تۆمارێک نییە.",
   owes: "قەرزە",
+  // monthly costs
+  costsSub: "تەنها سێ شت: کارەبا، کرێکاران، شوێن.",
+  electricity: "کارەبا",
+  workers: "کرێکاران (کۆی مانگ)",
+  place: "شوێن / کرێ",
+  monthTotal: "کۆی خەرجی ئەم مانگە",
+  savedOk: "پاشەکەوت کرا",
+  prevMonth: "مانگی پێشوو",
+  nextMonth: "مانگی دواتر",
+  yearOverview: "هەموو مانگەکانی ساڵ",
+  month: "مانگ",
+  unsavedChanges: "گۆڕانکارییەکان پاشەکەوت نەکراون. دەتەوێت فڕێیان بدەیت؟",
+  discard: "فڕێدان",
+  yearTotal: "کۆی ساڵ",
+  months: "کانوونی دووەم,شوبات,ئادار,نیسان,ئایار,حوزەیران,تەمموز,ئاب,ئەیلوول,تشرینی یەکەم,تشرینی دووەم,کانوونی یەکەم",
 } as const;
 
 export type Key = keyof typeof ckb;
@@ -233,6 +248,20 @@ const ar: Record<Key, string> = {
   refundDueTag: "يجب إرجاعه",
   noRecords: "لا توجد سجلات.",
   owes: "عليه",
+  costsSub: "ثلاثة أشياء فقط: الكهرباء، العمال، المكان.",
+  electricity: "الكهرباء",
+  workers: "العمال (إجمالي الشهر)",
+  place: "المكان / الإيجار",
+  monthTotal: "إجمالي مصاريف هذا الشهر",
+  savedOk: "تم الحفظ",
+  prevMonth: "الشهر السابق",
+  nextMonth: "الشهر التالي",
+  yearOverview: "أشهر السنة",
+  month: "الشهر",
+  unsavedChanges: "التغييرات غير محفوظة. هل تريد تجاهلها؟",
+  discard: "تجاهل",
+  yearTotal: "إجمالي السنة",
+  months: "كانون الثاني,شباط,آذار,نيسان,أيار,حزيران,تموز,آب,أيلول,تشرين الأول,تشرين الثاني,كانون الأول",
 };
 
 const dict = { ckb, ar } as const;
