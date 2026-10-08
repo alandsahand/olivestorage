@@ -1,13 +1,12 @@
 # Olive Storage — project handoff
 
 ## What this is
-A simple "olive storage" app, built by the owner on a PC. It is a small, easy project.
-(Exact features and tech stack are NOT decided yet — first job is to settle them below.)
+A Windows desktop app for a small olive business: stock (items, categories, units, deliveries), sales (client first, several items per invoice, partial payment -> debt), debts with later payments and refunds for cancelled sales, monthly costs (electricity, workers, place), and an owner-only PIN-locked dashboard (sales, profit, stock value, debts, charts). Kurdish (Sorani) + Arabic, right-to-left, IQD.
+Stack: Tauri 2 + React 19 + Vite + TypeScript + Tailwind 4 + SQLite. Status: MVP (build plan steps 0-8) is built and tested; see Done / Next steps. See README.md for commands.
 
 ## How the owner works
 - Works on this project from several different PCs, never one fixed place.
-- Does not want to depend on GitHub push/pull to continue. Context must live with the project files.
-- The project folder must be kept identical across PCs (synced folder such as OneDrive/Google Drive, or copy it).
+- Code and context travel through the GitHub repo alandsahand/olivestorage (this file is in the repo). The database is per-PC and not in git (move data with a backup file, see README.md).
 - Planning started in a claude.ai chat linked to the "storage" Project; development continues in Claude Code.
 
 ## Starting on another PC (do this every time)
@@ -33,13 +32,12 @@ The database is per-PC and is not in git.
 - Units are user-defined (own list, customizable). Items are grouped by user-defined categories (permanent) + search, to find items fast. Default language = Kurdish.
 - UI: simple, modern, beautiful. Owner likes 21st.dev-style (shadcn/ui-based) components -> plan: Tailwind + shadcn/ui, components from 21st.dev, RTL-first, Arabic-script font.
 - Sell screen change (owner): sale starts with the CLIENT NAME, can hold several items (invoice style). Printing invoices is planned for later; keep room for it. The mockup's sell screen still needs updating to this.
-- Build plan: docs/build-plan.md (steps 0-8), awaiting owner approval.
-- Flow draft is in docs/flow.md (mermaid). Open questions are listed at its bottom.
+- Build plan: docs/build-plan.md (steps 0-8), approved and carried out.
+- Flow chart: docs/flow.md (mermaid), its questions are all answered above.
 
 ## To decide first
-- What does the app store/track? (olives, jars, barrels, oil, stock, sales, locations?) — owner will describe the flow
-- GitHub repo URL
-- SQLite file location across PCs (the .db file should NOT be committed to git; decide on sync/export)
+- (nothing blocking) Printing invoices: layout and paper size (A4 / receipt printer) when the owner wants it.
+- Should a restore-from-backup button exist inside the app? (today: manual steps in README.md)
 
 ## Done
 - Nothing built yet. Environment installed (Node, Rust, Git, C++ Build Tools, WebView2), setup.cmd written, GitHub repo alandsahand/olivestorage connected and first commit pushed.
@@ -61,6 +59,8 @@ The database is per-PC and is not in git.
 - Dashboard numbers (selected month, local time): sales (cancelled excluded), cost of goods (buy price snapshot per sale line), gross = sales - cogs, monthly costs, net = gross - costs (can be negative, shown with a minus). "Now" figures: stock value (on hand x last buy price, archived items excluded), debts, refunds due. 6-month sales bars, top 5 sellers. Verified by hand and by an independent DB query. Tests: scripts/test-auth.ts, scripts/test-dashboard.ts.
 - Step 7 Arabic QA DONE (2026-10-08): every screen (Sell, Stock, Debts, Costs, plus the Stock/Debts/Item/Manage/Pay dialogs) visited in Arabic at 1280 and 960 px wide (the smallest window) with an automatic sideways-overflow check: fixed Stock table at 960 (tables now scroll inside their card, category column and the "receive" label hide below 1280 px, page padding smaller on narrow windows), Arabic label "الدين المتبقي". New permanent test scripts/test-i18n.ts (same keys in both languages, no empty text, no Kurdish-only letters in Arabic and no Arabic-only letters in Kurdish, 12 month names, no unused texts; removed 4 unused texts). `npm run wording` regenerates docs/wording.md (all 164 texts side by side) for a native-speaker review: owner has NOT reviewed the wording yet. NOT visually checked in Arabic: the unlocked Dashboard (needs the owner's PIN) — owner should look at it once.
 - Lesson: the owner uses the app on this PC at the same time. Do NOT script the real Dashboard/PIN or write to the dev DB without asking (my test script tried a wrong PIN several times against the owner's real PIN and locked it for 30 s; the failure counter stays until the next correct PIN).
+- Step 8 Polish DONE (2026-10-08): (a) Backups: Rust src-tauri/src/backup.rs copies olivestorage.db (+ -wal) to %APPDATA%\com.olivestorage.app\backups\olivestorage-YYYYMMDD-HHMMSS.db (UTC, time is read from the NAME because Windows keeps the original file date on copies) at every app start BEFORE the database opens, at most once per 6 h, newest 30 kept; sidebar "Backup" dialog (src/components/BackupModal.tsx, src/data/backup.ts) makes a consistent copy now with SQLite VACUUM INTO, lists backups, opens the folder. Both kinds verified: SQLite integrity_check ok and row counts equal to the live DB. Restore = manual steps in README.md. 4 Rust unit tests (`cargo test` in src-tauri). (b) src/components/ErrorGuard.tsx: red banner for any uncaught async error + crash screen with reload button. (c) App icon (olive) from assets/icon.svg via `npx tauri icon assets/icon.svg` (android/ios folders deleted). (d) Installer: `npm run tauri build` -> src-tauri/target/release/bundle/nsis/Olive Storage_0.9.0_x64-setup.exe (3 MB, NSIS, per-user, Arabic + English installer languages); version 0.9.0. (e) Content-Security-Policy set in tauri.conf.json (self only + ipc:); release exe smoke-tested read-only on this PC: all screens load data, no console errors. (f) README.md written. NOT done: the installer itself was not run (neither here nor on a second PC).
+- Testing tip: WebView2 refuses a faked LOCALAPPDATA; to run a second copy use WEBVIEW2_USER_DATA_FOLDER=<scratch dir> and a different --remote-debugging-port. Tauri finds the database through Windows (not %APPDATA%), so a second copy still opens the REAL database: only read.
 - Dev DB on this PC holds test data: sales/payments/refunds for clients ئاسۆ, شاناز, ئاسۆ محمد (some cancelled, refunds due). Safe to delete the .db file to start clean.
 - Mockup sell screen updated: client first, several items, print button (coming soon).
 - UI mockup (Kurdish, RTL, olive green on cream, 5 screens): docs/mockup/index.html. Owner approved the look, edits to come.
@@ -77,6 +77,10 @@ The database is per-PC and is not in git.
 8. (done) Step 5 — Monthly costs.
 9. (done) Step 6 — Dashboard + PIN lock. The test PIN was removed from this PC's DB: the owner creates his own PIN on first open.
 10. (done) Step 7 — Arabic QA. Open: owner/native speaker reviews docs/wording.md and sends corrections (edit src/i18n.tsx, run `npm run wording`).
-11. NEXT: Step 8 — polish: automatic database backup on every app start (keep last N copies in the app data folder), empty/error states review, app icon + name, Windows installer (.msi/.exe via `npm run tauri build`), test the installer on a second PC. Later (not in MVP): printing invoices, backup export/import between PCs.
-
-How to run: `npm install` then `npm run tauri dev` (first Rust build ~3 min). DB file: %APPDATA%\com.olivestorage.app\olivestorage.db.
+11. (done) Step 8 — Polish (backups, error guards, icon, installer, README).
+12. NEXT — owner's turn (nothing is blocking development):
+    a. Install `Olive Storage_0.9.0_x64-setup.exe` on a second PC (the shop PC) and try it: first run, create PIN + save recovery code, add items, sell, pay a debt, cancel, costs, dashboard, backup button. Report problems.
+    b. Look at the unlocked Dashboard in Arabic once (not visually reviewed).
+    c. Review docs/wording.md (Kurdish + Arabic) with a native speaker; send corrections -> edit src/i18n.tsx, run `npm run wording` and `npm test`.
+    d. Decide what comes next. Candidates (ask before starting any): printing invoices/receipts (layout + paper), restore-from-backup button, export to Excel, low-stock alerts, client phone numbers, bump version to 1.0.0 when the owner is happy.
+13. Housekeeping ideas: delete test data on this PC (remove the .db file in %APPDATA%\com.olivestorage.app\ while the app is closed) before real use.

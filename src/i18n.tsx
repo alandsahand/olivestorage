@@ -173,6 +173,18 @@ const ckb = {
   bestSellers: "باشترین کاڵاکان",
   noData: "هێشتا داتا نییە",
   pinChanged: "کۆد گۆڕدرا",
+  // backup + crash screen
+  backup: "پاشەکەوتی داتا",
+  backupHint: "ئەپەکە خۆکارانە هەر جارێک دەیکەیتەوە کۆپییەکی داتاکانت دەپارێزێت (دوایین ٣٠ دەمێنێتەوە). دەتوانیت ئێستاش خۆت پاشەکەوت بکەیت.",
+  lastBackup: "دوایین پاشەکەوت",
+  noBackups: "هێشتا هیچ پاشەکەوتێک نییە",
+  backupFiles: "پاشەکەوت پارێزراوە",
+  backupDone: "پاشەکەوت کرا",
+  backupNow: "ئێستا پاشەکەوت بکە",
+  openFolder: "کردنەوەی فۆڵدەر",
+  crashed: "کێشەیەکی چاوەڕواننەکراو ڕوویدا",
+  crashedHint: "داتاکانت سەلامەتن. ئەپەکە دووبارە بکەرەوە.",
+  reload: "دووبارە کردنەوە",
 } as const;
 
 export type Key = keyof typeof ckb;
@@ -343,6 +355,17 @@ const ar: Record<Key, string> = {
   bestSellers: "الأكثر مبيعاً",
   noData: "لا توجد بيانات بعد",
   pinChanged: "تم تغيير الرمز",
+  backup: "النسخ الاحتياطي",
+  backupHint: "ينسخ التطبيق بياناتك تلقائياً عند كل تشغيل (تبقى آخر ٣٠ نسخة). ويمكنك أخذ نسخة الآن.",
+  lastBackup: "آخر نسخة",
+  noBackups: "لا توجد نسخ احتياطية بعد",
+  backupFiles: "نسخة محفوظة",
+  backupDone: "تم النسخ الاحتياطي",
+  backupNow: "انسخ الآن",
+  openFolder: "فتح المجلد",
+  crashed: "حدث خطأ غير متوقع",
+  crashedHint: "بياناتك بأمان. أعد تحميل الصفحة.",
+  reload: "إعادة التحميل",
 };
 
 export const dict = { ckb, ar } as const;

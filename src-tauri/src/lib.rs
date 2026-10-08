@@ -1,3 +1,5 @@
+mod backup;
+
 use tauri_plugin_sql::{Migration, MigrationKind};
 
 // Database migrations live in src-tauri/migrations/*.sql.
@@ -45,12 +47,22 @@ fn migrations() -> Vec<Migration> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            // Copy the database BEFORE the window opens it (and before any migration runs).
+            backup::startup_backup(app.handle());
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations("sqlite:olivestorage.db", migrations())
                 .build(),
         )
+        .invoke_handler(tauri::generate_handler![
+            backup::list_backups,
+            backup::backup_target,
+            backup::prune_backups
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

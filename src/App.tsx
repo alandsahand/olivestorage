@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { HashRouter, NavLink, Route, Routes } from "react-router-dom";
-import { BarChart3, Lock, Package, Receipt, ShoppingCart, Zap, type LucideIcon } from "lucide-react";
+import { BarChart3, HardDrive, Lock, Package, Receipt, ShoppingCart, Zap, type LucideIcon } from "lucide-react";
 import { useI18n, type Key } from "@/i18n";
 import { checkDb } from "@/db";
 import Stock from "@/pages/Stock";
@@ -8,6 +8,7 @@ import Sell from "@/pages/Sell";
 import Debts from "@/pages/Debts";
 import Costs from "@/pages/Costs";
 import Dashboard from "@/pages/Dashboard";
+import { BackupModal } from "@/components/BackupModal";
 
 type Page = { path: string; key: Key; icon: LucideIcon; locked?: boolean };
 
@@ -48,6 +49,7 @@ function Placeholder({ title }: { title: Key }) {
 
 function Sidebar() {
   const { t, lang, setLang } = useI18n();
+  const [backupOpen, setBackupOpen] = useState(false);
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col gap-2 bg-olive-d p-4 text-white">
       <div className="flex items-center gap-3 px-3 pb-6 pt-1 text-2xl font-extrabold">
@@ -71,6 +73,13 @@ function Sidebar() {
         </NavLink>
       ))}
       <div className="flex-1" />
+      <button
+        onClick={() => setBackupOpen(true)}
+        className="flex items-center gap-3 rounded-2xl px-4 py-3 text-olive-l transition hover:bg-white/10"
+      >
+        <HardDrive className="size-5" />
+        {t("backup")}
+      </button>
       <div className="flex gap-1.5 rounded-xl bg-black/20 p-1 text-sm">
         {(["ckb", "ar"] as const).map((l) => (
           <button
@@ -82,6 +91,7 @@ function Sidebar() {
           </button>
         ))}
       </div>
+      {backupOpen && <BackupModal onClose={() => setBackupOpen(false)} />}
     </aside>
   );
 }
