@@ -21,6 +21,21 @@
   --color-warn-l: #fff3d6;
 }
 
+/* ---- Invoice printing / PDF ----
+   The invoice is rendered twice: once as a preview inside a dialog, and once inside .print-area
+   (hidden on screen). When printing, only .print-area is shown, so the PDF is just the invoice. */
+.print-area { display: none; }
+@page { size: A4; margin: 12mm; }
+@media print {
+  body > *:not(.print-area) { display: none !important; }
+  .print-area { display: block !important; }
+  html, body { background: #fff !important; height: auto !important; }
+  .invoice-sheet { box-shadow: none !important; border: 0 !important; padding: 0 !important; }
+}
+.invoice-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.invoice-sheet thead { display: table-header-group; }   /* header repeats on every page */
+.invoice-sheet tr { break-inside: avoid; }
+
 html, body, #root { height: 100%; }
 body {
   margin: 0;

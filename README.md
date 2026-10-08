@@ -26,6 +26,11 @@ npm run tauri build
 
 The installer is created at `src-tauri/target/release/bundle/nsis/عالم طرشي والزيتون_<version>_x64-setup.exe`. Copy that one file to the shop PC and run it (installs for the current user, no admin needed; Windows 11 already has WebView2).
 
+## Invoices (print / PDF)
+
+On the Sell screen, a saved sale (or any sale in the sales list) has a **Print / PDF** button. It shows a preview of the invoice (logo, shop name, client, table of materials, totals, notes). The button opens the Windows print dialog: choose a printer to print on paper, or **Microsoft Print to PDF / Save as PDF** to save a PDF file.
+
+The table columns are a plain list in `src/components/InvoiceSheet.tsx` (`INVOICE_COLUMNS`): to add, remove or reorder a column, edit that list. To preview the layout with sample data: `npm run dev`, then open `http://localhost:1420/#/__invoice-demo?lang=ar&lines=30&note=1` in a browser (development only).
 ## Where the data lives
 
 `%APPDATA%\com.olivestorage.app\olivestorage.db` (one SQLite file). It is **not** in git.

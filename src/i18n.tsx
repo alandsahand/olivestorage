@@ -72,7 +72,6 @@ const ckb = {
   payAll: "هەمووی دا",
   debtLeft: "قەرز دەمێنێتەوە",
   saveSale: "فرۆشتن تۆمار بکە",
-  printSoon: "چاپکردن (بەمزووانە)",
   saleSaved: "فرۆشتن تۆمار کرا",
   emptyInvoice: "هیچ کاڵایەک زیاد نەکراوە",
   clientRequired: "ناوی کڕیار پێویستە",
@@ -185,6 +184,17 @@ const ckb = {
   crashed: "کێشەیەکی چاوەڕواننەکراو ڕوویدا",
   crashedHint: "داتاکانت سەلامەتن. ئەپەکە دووبارە بکەرەوە.",
   reload: "دووبارە کردنەوە",
+  // invoice (PDF)
+  invoice: "وەسڵی فرۆشتن",
+  invoiceNo: "ژمارەی وەسڵ",
+  colId: "ID",
+  colWeight: "کێشی گشتی",
+  notes: "تێبینی",
+  noteOptional: "تێبینی (دڵخوازە)",
+  paidAmount: "پارەی دراو",
+  printPdf: "چاپ / PDF",
+  pdfHint: "بۆ فایلی PDF، لە لیستی چاپکەر «Microsoft Print to PDF» یان «Save as PDF» هەڵبژێرە.",
+  invoicePreview: "پێشبینینی وەسڵ",
 } as const;
 
 export type Key = keyof typeof ckb;
@@ -257,7 +267,6 @@ const ar: Record<Key, string> = {
   payAll: "دفع الكل",
   debtLeft: "الدين المتبقي",
   saveSale: "تسجيل البيع",
-  printSoon: "طباعة (قريباً)",
   saleSaved: "تم تسجيل البيع",
   emptyInvoice: "لم تتم إضافة أي صنف",
   clientRequired: "اسم الزبون مطلوب",
@@ -366,6 +375,16 @@ const ar: Record<Key, string> = {
   crashed: "حدث خطأ غير متوقع",
   crashedHint: "بياناتك بأمان. أعد تحميل الصفحة.",
   reload: "إعادة التحميل",
+  invoice: "فاتورة بيع",
+  invoiceNo: "رقم الفاتورة",
+  colId: "ID",
+  colWeight: "الوزن الإجمالي",
+  notes: "ملاحظات",
+  noteOptional: "ملاحظات (اختياري)",
+  paidAmount: "المدفوع",
+  printPdf: "طباعة / PDF",
+  pdfHint: "للحصول على ملف PDF اختر «Microsoft Print to PDF» أو «Save as PDF» من قائمة الطابعات.",
+  invoicePreview: "معاينة الفاتورة",
 };
 
 export const dict = { ckb, ar } as const;

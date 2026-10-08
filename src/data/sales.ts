@@ -2,7 +2,7 @@ import { getDb } from "../db";
 import { lastBuyPrice, onHand } from "./stock";
 
 export type LineInput = { item_id: number; qty_milli: number; unit_price: number };
-export type SaleInput = { client_name: string; lines: LineInput[]; paid: number };
+export type SaleInput = { client_name: string; lines: LineInput[]; paid: number; note?: string };
 
 export type Sale = {
   id: number;
@@ -10,6 +10,7 @@ export type Sale = {
   client_name: string;
   total: number;
   paid: number; // paid at the moment of sale
+  note: string | null; // optional text printed on the invoice
   later_paid: number; // payments recorded afterwards (non-cancelled)
   refunded: number; // money given back after cancellation
   debt: number; // 0 for cancelled sales
@@ -114,14 +115,20 @@ async function insertLines(sale_id: number, rev: number, lines: Prepared["lines"
 
 /* ---------- create / edit / cancel ---------- */
 
+/** Empty or whitespace-only notes are stored as "no note"; very long ones are cut to 500 characters. */
+export const cleanNote = (raw?: string): string | null => {
+  const t = (raw ?? "").trim();
+  return t ? t.slice(0, 500) : null;
+};
+
 export async function createSale(input: SaleInput): Promise<number> {
   const { lines, total } = await prepare(input, 0, new Map());
   const client_id = await addClient(input.client_name);
   const db = await getDb();
   // rev 0 = not visible yet. The sale only counts once the final UPDATE flips it to rev 1.
   const res = await db.execute(
-    "INSERT INTO sales (client_id, total, paid, rev, created_at) VALUES ($1,$2,$3,0,$4)",
-    [client_id, total, input.paid, now()],
+    "INSERT INTO sales (client_id, total, paid, note, rev, created_at) VALUES ($1,$2,$3,$4,0,$5)",
+    [client_id, total, input.paid, cleanNote(input.note), now()],
   );
   const id = res.lastInsertId as number;
   try {
@@ -151,8 +158,8 @@ export async function updateSale(id: number, input: SaleInput): Promise<void> {
   try {
     await insertLines(id, newRev, lines);
     const done = await db.execute(
-      "UPDATE sales SET rev = $1, client_id = $2, total = $3, paid = $4 WHERE id = $5 AND rev = $6 AND cancelled_at IS NULL",
-      [newRev, client_id, total, input.paid, id, cur.rev],
+      "UPDATE sales SET rev = $1, client_id = $2, total = $3, paid = $4, note = $5 WHERE id = $6 AND rev = $7 AND cancelled_at IS NULL",
+      [newRev, client_id, total, input.paid, cleanNote(input.note), id, cur.rev],
     );
     if (!done.rowsAffected) throw new Error("conflict");
   } catch (e) {
@@ -160,8 +167,8 @@ export async function updateSale(id: number, input: SaleInput): Promise<void> {
     throw e;
   }
   await log(id, "update", {
-    from: { client: cur.client_name, total: cur.total, paid: cur.paid, lines: cur.lines },
-    to: { client: input.client_name.trim(), total, paid: input.paid, lines },
+    from: { client: cur.client_name, total: cur.total, paid: cur.paid, note: cur.note, lines: cur.lines },
+    to: { client: input.client_name.trim(), total, paid: input.paid, note: cleanNote(input.note), lines },
   });
 }
 
@@ -191,7 +198,7 @@ export function shape(r: SaleRow): Sale {
   };
 }
 
-const SALE_COLS = `s.id, s.client_id, c.name AS client_name, s.total, s.paid,
+const SALE_COLS = `s.id, s.client_id, c.name AS client_name, s.total, s.paid, s.note,
        ${PAY_SUM("payment")} AS later_paid, ${PAY_SUM("refund")} AS refunded,
        s.rev, s.created_at, s.cancelled_at,
        (SELECT COUNT(*) FROM sale_lines l WHERE l.sale_id = s.id AND l.rev = s.rev) AS line_count`;

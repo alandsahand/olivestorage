@@ -85,4 +85,16 @@ eq("selling everything leaves exactly zero", await hand(oil), 0);
 await throws("nothing left to sell", () => sales.createSale({ client_name: "Halmat", paid: 0, lines: [{ item_id: oil, qty_milli: 1, unit_price: 45000 }] }), "insufficient");
 
 eq("history has create/update/cancel entries", (sqlite.prepare("SELECT COUNT(DISTINCT action) AS n FROM history_log WHERE entity='sales'").get() as { n: number }).n, 3);
+// --- optional note printed on the invoice (kept at the end: it adds a sale to the list)
+const line = (qty: number) => [{ item_id: olives, qty_milli: qty, unit_price: 7500 }];
+const olivesBefore = await hand(olives);
+eq("a sale without a note has none", (await sales.getSale(s1))!.note, null);
+const withNote = await sales.createSale({ client_name: "Noor", paid: 0, note: "  deliver tomorrow  ", lines: line(1000) });
+eq("note is saved and trimmed", (await sales.getSale(withNote))!.note, "deliver tomorrow");
+await sales.updateSale(withNote, { client_name: "Noor", paid: 0, note: "   ", lines: line(1000) });
+eq("an empty note on edit removes it", (await sales.getSale(withNote))!.note, null);
+await sales.updateSale(withNote, { client_name: "Noor", paid: 0, note: "x".repeat(900), lines: line(1000) });
+eq("a very long note is cut to 500 characters", (await sales.getSale(withNote))!.note!.length, 500);
+await sales.cancelSale(withNote);
+eq("stock is back after cancelling the note sale", await hand(olives), olivesBefore);
 finish();

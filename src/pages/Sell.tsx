@@ -4,6 +4,7 @@ import { useI18n } from "@/i18n";
 import { Button, Chip, ConfirmModal, MoneyInput, inputCls } from "@/components/ui";
 import { formatDateTime, formatNumber, formatQty, normalizeText, parseQty, qtyText } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
+import { InvoiceModal } from "@/components/InvoiceModal";
 import * as stock from "@/data/stock";
 import * as sales from "@/data/sales";
 import type { Item, Named } from "@/data/stock";
@@ -17,10 +18,12 @@ function SaleForm({
   editing,
   onEditDone,
   onStopEditing,
+  onPrint,
 }: {
   editing: SaleDetail | null;
   onEditDone: () => void;
   onStopEditing: () => void;
+  onPrint: (saleId: number) => void;
 }) {
   const { t } = useI18n();
   const errorText = useErrorText();
@@ -47,7 +50,8 @@ function SaleForm({
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState<{ total: number } | null>(null);
+  const [note, setNote] = useState(editing?.note ?? "");
+  const [saved, setSaved] = useState<{ id: number; total: number } | null>(null);
 
   const reload = useCallback(async () => {
     const [i, c, cl] = await Promise.all([stock.listItems(), stock.listCategories(), sales.listClients()]);
@@ -112,6 +116,7 @@ function SaleForm({
     const input = {
       client_name: clientName,
       paid: effPaid,
+      note,
       lines: parsed.map((l) => ({ item_id: l.item_id, qty_milli: l.q as number, unit_price: l.price as number })),
     };
     try {
@@ -119,8 +124,9 @@ function SaleForm({
         await sales.updateSale(editing.id, input);
         onEditDone();
       } else {
-        await sales.createSale(input);
-        setSaved({ total });
+        const id = await sales.createSale(input);
+        setSaved({ id, total });
+        setNote("");
         setLines([]);
         setClientName("");
         setPaid(null);
@@ -204,8 +210,13 @@ function SaleForm({
           </div>
         )}
         {saved && (
-          <div className="mb-4 flex items-center gap-2 rounded-2xl bg-good-l p-3 font-bold text-good">
-            <Check className="size-5" /> {t("saleSaved")}: {formatNumber(saved.total)} {t("currency")}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-good-l p-3 font-bold text-good">
+            <span className="flex items-center gap-2">
+              <Check className="size-5" /> {t("saleSaved")}: {formatNumber(saved.total)} {t("currency")}
+            </span>
+            <Button small onClick={() => onPrint(saved.id)}>
+              <Printer className="size-4" /> {t("printPdf")}
+            </Button>
           </div>
         )}
 
@@ -331,14 +342,25 @@ function SaleForm({
           </span>
         </div>
 
+        <label className="mb-1.5 block font-bold">{t("noteOptional")}</label>
+        <textarea
+          className={`${inputCls} mb-4 resize-none`}
+          rows={2}
+          maxLength={500}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+
         {error && <p className="mb-3 rounded-xl bg-bad-l p-3 text-bad">{error}</p>}
         {!clientName.trim() && lines.length > 0 && <p className="mb-3 text-base text-muted">{t("clientRequired")}</p>}
         <Button onClick={save} disabled={!canSave} className="w-full !py-4 text-xl">
           <Check className="size-6" /> {t("saveSale")}
         </Button>
-        <Button variant="secondary" disabled className="mt-3 w-full" title={t("printSoon")}>
-          <Printer className="size-5" /> {t("printSoon")}
-        </Button>
+        {editing && (
+          <Button variant="secondary" className="mt-3 w-full" onClick={() => onPrint(editing.id)}>
+            <Printer className="size-5" /> {t("printPdf")}
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -346,7 +368,7 @@ function SaleForm({
 
 /* ---------- sales history ---------- */
 
-function History({ onEdit }: { onEdit: (id: number) => void }) {
+function History({ onEdit, onPrint }: { onEdit: (id: number) => void; onPrint: (id: number) => void }) {
   const { t } = useI18n();
   const errorText = useErrorText();
   const [rows, setRows] = useState<Sale[] | null>(null);
@@ -414,6 +436,9 @@ function History({ onEdit }: { onEdit: (id: number) => void }) {
                 <td className="whitespace-nowrap p-3 text-end">
                   {!dead && (
                     <>
+                      <Button small variant="ghost" onClick={() => onPrint(s.id)} title={t("printPdf")} aria-label={t("printPdf")}>
+                        <Printer className="size-5" />
+                      </Button>{" "}
                       <Button small variant="ghost" onClick={() => onEdit(s.id)}>
                         <Pencil className="size-4" /> {t("edit")}
                       </Button>{" "}
@@ -447,6 +472,7 @@ export default function Sell() {
   const [tab, setTab] = useState<"new" | "history">("new");
   const [editing, setEditing] = useState<SaleDetail | null>(null);
   const [formKey, setFormKey] = useState(0); // remounts the form when switching sale
+  const [printId, setPrintId] = useState<number | null>(null); // sale whose invoice is open
 
   async function startEdit(id: number) {
     const sale = await sales.getSale(id);
@@ -486,10 +512,12 @@ export default function Sell() {
             setEditing(null);
             setFormKey((k) => k + 1);
           }}
+          onPrint={setPrintId}
         />
       ) : (
-        <History onEdit={startEdit} />
+        <History onEdit={startEdit} onPrint={setPrintId} />
       )}
+      {printId !== null && <InvoiceModal saleId={printId} onClose={() => setPrintId(null)} />}
     </div>
   );
 }

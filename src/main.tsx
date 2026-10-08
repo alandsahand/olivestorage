@@ -5,13 +5,25 @@ import { I18nProvider } from "./i18n";
 import { CrashGuard, ErrorBanner } from "./components/ErrorGuard";
 import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
+const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
+
+// Development-only preview of the invoice layout with sample data (this branch is removed from the shipped app).
+if (import.meta.env.DEV && location.hash.startsWith("#/__invoice-demo")) {
+  const { default: InvoiceDemo } = await import("./dev/InvoiceDemo");
+  root.render(
     <I18nProvider>
-      <CrashGuard>
-        <App />
-      </CrashGuard>
-      <ErrorBanner />
-    </I18nProvider>
-  </React.StrictMode>,
-);
+      <InvoiceDemo />
+    </I18nProvider>,
+  );
+} else {
+  root.render(
+    <React.StrictMode>
+      <I18nProvider>
+        <CrashGuard>
+          <App />
+        </CrashGuard>
+        <ErrorBanner />
+      </I18nProvider>
+    </React.StrictMode>,
+  );
+}
