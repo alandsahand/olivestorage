@@ -1,0 +1,171 @@
+﻿=====================================================================
+  عالم طرشي والزيتون  (Olive Storage)  -  STEPS FOR A NEW PC
+  Written 2026-10-08 at the end of the session on the first PC.
+  Follow the steps in order. Copy each command line exactly.
+=====================================================================
+
+WHAT YOU NEED
+  - Windows 10/11 and an internet connection
+  - Your GitHub login (account: alandsahand)  - the repository is private
+  - Claude Code installed and signed in on that PC
+
+
+---------------------------------------------------------------------
+STEP 1 - Install Git (only if "git" is not installed yet)
+---------------------------------------------------------------------
+  Download from  https://git-scm.com/download/win  and install (all defaults).
+  Then CLOSE PowerShell and open it again (so it finds Git).
+  Test:   git --version
+
+
+---------------------------------------------------------------------
+STEP 2 - Download the project from GitHub
+---------------------------------------------------------------------
+  Open PowerShell and go to the folder where you keep projects, for example:
+
+      cd $HOME\Documents
+
+  Then:
+
+      git clone https://github.com/alandsahand/olivestorage.git
+
+      cd olivestorage
+
+  A browser window asks you to sign in to GitHub - sign in and allow it.
+  (Only the first time on each PC.)
+
+
+---------------------------------------------------------------------
+STEP 3 - Install everything the project needs
+---------------------------------------------------------------------
+  In the olivestorage folder, double-click   setup.cmd
+
+  - Click YES on every "allow this app to make changes" window.
+  - It installs / checks: Node, Rust, C++ Build Tools, WebView2, then the
+    project packages.  The C++ Build Tools download is BIG and slow - wait.
+  - At the end it prints  [ OK ]  for each item. If something says [FAIL],
+    close the window, run setup.cmd again and click Yes.
+  - If it says Git needs your name, run these two lines once:
+
+      git config --global user.name "alandsahand"
+
+      git config --global user.email "alandsahand1997@gmail.com"
+
+  When setup is finished, CLOSE PowerShell and open it again, then:
+
+      cd $HOME\Documents\olivestorage
+
+
+---------------------------------------------------------------------
+STEP 4 - Start Claude Code and continue
+---------------------------------------------------------------------
+  Open Claude Code in the olivestorage folder and type exactly:
+
+      read CLAUDE.md and continue
+
+  Claude reads the notes (the "WHERE WE STOPPED" part at the bottom of
+  CLAUDE.md) and knows everything we did, so you can just keep going.
+  Claude on the new PC does NOT remember our chat - CLAUDE.md is its memory.
+
+
+---------------------------------------------------------------------
+STEP 5 - Check that it all works (optional but recommended)
+---------------------------------------------------------------------
+      npm test
+
+  It must end with "All tests passed" several times (7 groups, no FAIL).
+
+  Run the app:
+
+      npm run tauri dev
+
+  The FIRST run compiles for about 3 minutes. Then the window opens.
+  The database starts EMPTY on a new PC (that is normal).
+
+
+---------------------------------------------------------------------
+EVERY TIME YOU SIT DOWN AT ANY PC
+---------------------------------------------------------------------
+  Start:   git pull          (gets the newest work)
+           then tell Claude:  read CLAUDE.md and continue
+
+  Finish:  tell Claude to update CLAUDE.md, then it does
+           git add -A, git commit, git push
+           (or run them yourself:  git add -A   then
+            git commit -m "what I did"   then   git push)
+
+
+---------------------------------------------------------------------
+ONLY THE SHOP PC (to just USE the app, no programming)
+---------------------------------------------------------------------
+  You do not need any of the steps above on the shop PC.
+  Copy ONE of these files from the first PC (they are in the folder
+  olivestorage\src-tauri\target\release\ ):
+
+    A) olivestorage.exe                                 -> double-click, no install
+    B) bundle\nsis\عالم طرشي والزيتون_0.9.0_x64-setup.exe  -> installer
+
+  (These files are NOT on GitHub. On a PC with the full setup you can
+   make them again with:   npm run tauri build )
+
+  First time in the app:
+    - Dashboard -> create the owner PIN (4 to 8 digits)
+    - It shows a LONG RECOVERY CODE ONCE. Write it down / copy it and keep
+      it safe. It is the only way back in if the PIN is forgotten.
+
+
+---------------------------------------------------------------------
+WHAT DOES NOT TRAVEL THROUGH GITHUB
+---------------------------------------------------------------------
+  1. The DATABASE. A new PC starts empty. This PC's data is only test data.
+     To bring real data over: in the app click "Backup" (sidebar), copy a
+     file from the backups folder to the other PC, then restore it:
+       - close the app
+       - folder:  %APPDATA%\com.olivestorage.app\
+       - delete olivestorage.db, olivestorage.db-wal, olivestorage.db-shm
+       - copy the backup file in and rename it to  olivestorage.db
+       - start the app
+     (Same steps are in README.md.)
+  2. The built program files (.exe / installer) - see above.
+  3. Our chat with Claude - everything important is written in CLAUDE.md.
+
+
+---------------------------------------------------------------------
+IF SOMETHING GOES WRONG
+---------------------------------------------------------------------
+  "git is not recognized"       -> close and reopen PowerShell; if still no,
+                                   reinstall Git (Step 1).
+  setup.cmd shows [FAIL]        -> run it again, click YES on every prompt.
+  "npm is not recognized"       -> close and reopen PowerShell (setup just
+                                   installed it).
+  npm run tauri dev says port 1420 is busy
+                                -> another copy is running; close it.
+  Window does not open / WebView2 error
+                                -> run setup.cmd again (it installs WebView2).
+  Dashboard says "too many tries" -> wait the shown seconds (30 s, then 60 s,
+                                   ... up to 10 min). Forgot the PIN? Use
+                                   "I forgot my PIN" + the recovery code.
+  Test data still in the app    -> close the app, delete
+                                   %APPDATA%\com.olivestorage.app\olivestorage.db
+                                   (and the -wal / -shm files next to it).
+
+  Anything else: copy the red error text and give it to Claude.
+
+
+---------------------------------------------------------------------
+WHERE WE STOPPED (2026-10-08)
+---------------------------------------------------------------------
+  DONE and pushed to GitHub (last commit a7c05b2):
+    Stock, Sell (client first, several items), Debts + refunds, Monthly
+    costs, PIN-locked Dashboard, Kurdish + Arabic, automatic backups,
+    app renamed, invoice Print / PDF (with unit price column), notes.
+  STILL TO DO (your turn, nothing blocks Claude):
+    1. Try the installer / .exe on the shop PC with the real flow.
+    2. Press Print / PDF on a real sale, save the PDF, tell Claude what to change.
+    3. Unlock the Dashboard once in Arabic and look at it.
+    4. Have a native speaker read  docs\wording.md  (all app texts, Kurdish
+       and Arabic) and send corrections.
+    5. Decide what comes next (receipt-printer size, restore button, Excel
+       export, low-stock alerts, client phone numbers ...).
+
+=====================================================================
