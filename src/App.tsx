@@ -4,6 +4,7 @@ import { BarChart3, Lock, Package, Receipt, ShoppingCart, Zap, type LucideIcon }
 import { useI18n, type Key } from "@/i18n";
 import { checkDb } from "@/db";
 import Stock from "@/pages/Stock";
+import Sell from "@/pages/Sell";
 
 type Page = { path: string; key: Key; icon: LucideIcon; locked?: boolean };
 
@@ -93,7 +94,9 @@ export default function App() {
               <Route
                 key={p.path}
                 path={p.path}
-                element={p.path === "/stock" ? <Stock /> : <Placeholder title={p.key} />}
+                element={
+                  p.path === "/stock" ? <Stock /> : p.path === "/" ? <Sell /> : <Placeholder title={p.key} />
+                }
               />
             ))}
           </Routes>

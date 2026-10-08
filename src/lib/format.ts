@@ -33,8 +33,19 @@ export function formatQty(milli: number): string {
   return toArabicDigits(s).replace(".", "٫");
 }
 
+/** Quantity as editable text: Kurdish digits, "٫" decimal, NO thousands separators (so it parses back exactly). */
+export function qtyText(milli: number): string {
+  return toArabicDigits(String(milli / 1000)).replace(".", "٫");
+}
+
 export function formatDate(iso: string): string {
   return toArabicDigits(new Date(iso).toLocaleDateString("en-GB"));
+}
+
+export function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return toArabicDigits(`${d.toLocaleDateString("en-GB")} ${time}`);
 }
 
 /** Search-friendly form: lowercase, no diacritics, Arabic/Kurdish letter variants unified. */

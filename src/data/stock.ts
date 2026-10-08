@@ -92,14 +92,42 @@ export const archiveCategory = (id: number) => archiveNamed("categories", id);
 
 /* ---------- items ---------- */
 
-// On hand is always calculated from deliveries (later also minus sales), never typed in.
+// Sold quantity of an item = current lines of visible, non-cancelled sales (see 003_sales.sql).
+const SOLD_SQL = `(SELECT COALESCE(SUM(l.qty_milli), 0) FROM sale_lines l
+                    JOIN sales sa ON sa.id = l.sale_id AND l.rev = sa.rev
+                   WHERE sa.rev >= 1 AND sa.cancelled_at IS NULL AND l.item_id = ITEM_ID)`;
+
+/** Quantity on hand (thousandths). `excludeSaleId` ignores one sale's lines (used when editing it). */
+export async function onHand(item_id: number, excludeSaleId = 0): Promise<number> {
+  const db = await getDb();
+  const rows = await db.select<{ n: number }[]>(
+    `SELECT COALESCE((SELECT SUM(qty_milli) FROM stock_in WHERE item_id = $1 AND cancelled_at IS NULL), 0)
+          - (SELECT COALESCE(SUM(l.qty_milli), 0) FROM sale_lines l
+               JOIN sales sa ON sa.id = l.sale_id AND l.rev = sa.rev
+              WHERE sa.rev >= 1 AND sa.cancelled_at IS NULL AND l.item_id = $1 AND sa.id <> $2) AS n`,
+    [item_id, excludeSaleId],
+  );
+  return rows[0].n;
+}
+
+export async function lastBuyPrice(item_id: number): Promise<number | null> {
+  const db = await getDb();
+  const rows = await db.select<{ p: number }[]>(
+    "SELECT buy_price AS p FROM stock_in WHERE item_id = $1 AND cancelled_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 1",
+    [item_id],
+  );
+  return rows.length ? rows[0].p : null;
+}
+
+// On hand is always calculated (deliveries minus sales), never typed in.
 export async function listItems(): Promise<Item[]> {
   const db = await getDb();
   return db.select<Item[]>(
     `SELECT i.id, i.name, i.category_id, i.unit_id,
             c.name AS category_name, u.name AS unit_name, i.default_sell_price,
             COALESCE((SELECT SUM(s.qty_milli) FROM stock_in s
-                       WHERE s.item_id = i.id AND s.cancelled_at IS NULL), 0) AS on_hand_milli,
+                       WHERE s.item_id = i.id AND s.cancelled_at IS NULL), 0)
+              - ${SOLD_SQL.replace("ITEM_ID", "i.id")} AS on_hand_milli,
             (SELECT s.buy_price FROM stock_in s
               WHERE s.item_id = i.id AND s.cancelled_at IS NULL
               ORDER BY s.created_at DESC, s.id DESC LIMIT 1) AS last_buy_price
@@ -173,6 +201,8 @@ export async function editDelivery(id: number, qty_milli: number, buy_price: num
   const db = await getDb();
   const old = await db.select<Delivery[]>("SELECT * FROM stock_in WHERE id = $1", [id]);
   if (!old.length || old[0].cancelled_at) throw new Error("not editable");
+  // Stock must never go below what was already sold.
+  if ((await onHand(old[0].item_id)) - old[0].qty_milli + qty_milli < 0) throw new Error("insufficient");
   await db.execute("UPDATE stock_in SET qty_milli=$1, buy_price=$2 WHERE id=$3", [qty_milli, buy_price, id]);
   await log("stock_in", id, "update", {
     from: { qty_milli: old[0].qty_milli, buy_price: old[0].buy_price },
@@ -182,6 +212,9 @@ export async function editDelivery(id: number, qty_milli: number, buy_price: num
 
 export async function voidDelivery(id: number) {
   const db = await getDb();
+  const old = await db.select<Delivery[]>("SELECT * FROM stock_in WHERE id = $1", [id]);
+  if (!old.length) throw new Error("not found");
+  if (!old[0].cancelled_at && (await onHand(old[0].item_id)) - old[0].qty_milli < 0) throw new Error("insufficient");
   await db.execute("UPDATE stock_in SET cancelled_at = $1 WHERE id = $2 AND cancelled_at IS NULL", [now(), id]);
   await log("stock_in", id, "cancel", {});
 }

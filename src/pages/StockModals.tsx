@@ -2,16 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Pencil, Plus, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button, ConfirmModal, Field, MoneyInput, Modal, inputCls } from "@/components/ui";
-import { formatDate, formatNumber, formatQty, parseQty } from "@/lib/format";
+import { formatDate, formatNumber, formatQty, parseQty, qtyText } from "@/lib/format";
+import { useErrorText } from "@/lib/errors";
 import * as db from "@/data/stock";
 import type { Delivery, Item, Named } from "@/data/stock";
 
 /* ---------- helpers ---------- */
-
-function useErrorText() {
-  const { t } = useI18n();
-  return (e: unknown) => (e instanceof Error && e.message === "duplicate" ? t("duplicate") : t("error"));
-}
 
 /** A select that can also create a new entry inline (used for category and unit). */
 function PickOrAdd({
@@ -248,7 +244,7 @@ export function DeliveriesModal({ item, onChanged, onClose }: { item: Item; onCh
 
   function startEdit(d: Delivery) {
     setEditing(d.id);
-    setEQty(String(d.qty_milli / 1000));
+    setEQty(qtyText(d.qty_milli));
     setEPrice(d.buy_price);
     setError("");
   }

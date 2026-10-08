@@ -50,6 +50,12 @@ The database is per-PC and is not in git.
 - Tests: `npm test` runs scripts/test-stock.ts (real SQLite via node:sqlite on the real migration file). Add a test file per step.
 - Known limits to handle in step 3: editing/cancelling a delivery must be blocked or checked if sales already used that stock (on-hand must never go negative). The Stock screen has no delete of units/categories, only archive (by design).
 - This PC's dev database contains test data created while verifying step 2 (item "زەیتوونی ڕەش", categories زەیتوون/زەیت, unit کیلۆ). Safe to delete the .db file to start clean.
+- Step 3 Sell DONE and tested (2026-10-08): client first (typed name, existing clients suggested, new ones created automatically), several items per sale, price pre-filled + editable, qty +/- and typed decimals, live total, "paid" defaults to paid-in-full until the owner types a lower amount, debt = total - paid, stock check (can't oversell, message shows what is available), sales history tab with edit and cancel, print button present but disabled ("coming soon"). Code: src/data/sales.ts, src/pages/Sell.tsx, src-tauri/migrations/003_sales.sql, src/lib/errors.ts.
+- Sales data model: a sale is visible only when sales.rev >= 1; sale_lines belong to a revision (sale_lines.rev); current lines = rev equal to sales.rev. Create = insert rev 0 + lines, then flip to rev 1; edit = insert lines at rev+1 then flip sales.rev in one UPDATE (atomic, old revisions stay as history; failed attempts are cleaned up). Any new query on sales/lines MUST filter `sa.rev >= 1` and join lines on `l.rev = sa.rev`, and exclude `cancelled_at IS NOT NULL` for stock/profit.
+- Cost for profit: each sale line stores buy_price = the item's LAST buy price at the time of sale (kept unchanged when the sale is later edited). Owner has not been asked about this method (alternatives: average cost, FIFO) — mention it when building the Dashboard (step 6).
+- Stock guard added: a delivery cannot be cancelled/shrunk if sold stock depends on it ("insufficient").
+- Quantities in text boxes use qtyText() (Kurdish digits, "٫", no thousands separators); display uses formatQty().
+- Dev DB on this PC also holds a test sale (cancelled) for client "ئاسۆ محمد".
 - Mockup sell screen updated: client first, several items, print button (coming soon).
 - UI mockup (Kurdish, RTL, olive green on cream, 5 screens): docs/mockup/index.html. Owner approved the look, edits to come.
 
@@ -60,6 +66,7 @@ The database is per-PC and is not in git.
 3. (done) MVP plan approved: docs/build-plan.md. Database stays per-PC (not synced), owner OK with it (all PCs are dev PCs).
 4. (done) Step 0 + Step 1 of build plan.
 5. (done) Step 2 — Stock.
-6. NEXT: Step 3 — Sell (client first, several items per sale, price pre-filled and editable, stock check, paid amount, automatic debt, edit/cancel). Then steps 4-8 in order; owner tests each step before the next.
+6. (done) Step 3 — Sell.
+7. NEXT: Step 4 — Debts: list clients who owe (sum of debt per client + per sale), record later payments (new `payments` table via migration 004; payments editable/cancellable), history. Then update the debt formula in src/data/sales.ts (SALE_COLS: debt = total - paid - SUM(non-cancelled payments)) and the History tab/Sell tests. Decide what happens to payments when a sale is cancelled (suggest: keep payment records, show them as money to refund/credit; ask the owner). Then steps 5-8; owner tests each step before the next.
 
 How to run: `npm install` then `npm run tauri dev` (first Rust build ~3 min). DB file: %APPDATA%\com.olivestorage.app\olivestorage.db.
