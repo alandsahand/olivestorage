@@ -1,0 +1,2 @@
+# Migrations must be byte-identical on every PC (the database verifies checksums).
+*.sql text eol=lf

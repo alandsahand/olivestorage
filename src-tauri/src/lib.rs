@@ -1,18 +1,27 @@
 use tauri_plugin_sql::{Migration, MigrationKind};
 
-// Database migrations. Never edit an existing migration once released:
-// add a new one with the next version number so old data is always upgraded safely.
-// Money is stored as whole IQD integers (no decimals).
+// Database migrations live in src-tauri/migrations/*.sql.
+// Never edit a migration once released: add a new file with the next version number,
+// so old data is always upgraded safely.
 fn migrations() -> Vec<Migration> {
-    vec![Migration {
-        version: 1,
-        description: "create settings",
-        sql: "CREATE TABLE settings (
+    vec![
+        Migration {
+            version: 1,
+            description: "create settings",
+            // Kept inline and byte-for-byte as first released: the database verifies checksums.
+            sql: "CREATE TABLE settings (
                 key   TEXT PRIMARY KEY,
                 value TEXT NOT NULL
               );",
-        kind: MigrationKind::Up,
-    }]
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 2,
+            description: "stock: units, categories, items, deliveries, history",
+            sql: include_str!("../migrations/002_stock.sql"),
+            kind: MigrationKind::Up,
+        },
+    ]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

@@ -45,6 +45,11 @@ The database is per-PC and is not in git.
 - Nothing built yet. Environment installed (Node, Rust, Git, C++ Build Tools, WebView2), setup.cmd written, GitHub repo alandsahand/olivestorage connected and first commit pushed.
 - Flow chart written: docs/flow.md (answers recorded).
 - Step 1 scaffold DONE and running: Tauri 2 + React 19 + Vite + TS + Tailwind 4, RTL Kurdish/Arabic switch (src/i18n.tsx), sidebar + 5 placeholder pages (src/App.tsx), SQLite via tauri-plugin-sql with migrations in src-tauri/src/lib.rs (migration 1 = settings table), DB connected and verified.
+- Step 2 Stock DONE and tested (2026-10-08): units + categories (create inline, rename, archive), items (new/edit/archive), receive goods (qty + buy price per delivery), deliveries list with edit/cancel, search (Arabic/Kurdish letter variants unified) + category chips, history_log on every change. Code: src/data/stock.ts, src/pages/Stock.tsx, src/pages/StockModals.tsx, src/components/ui.tsx, src/lib/format.ts. Migration: src-tauri/migrations/002_stock.sql.
+- Engineering rules in force: money = whole IQD integers; quantities = integer thousandths (qty_milli, 2.5 kg = 2500); on-hand is always calculated; nothing hard-deleted (archive/cancel + history_log). NEVER edit a released migration (the DB checks checksums) — add 003_*.sql etc. Migration 1 stays inline in lib.rs byte-for-byte; .gitattributes forces LF on *.sql.
+- Tests: `npm test` runs scripts/test-stock.ts (real SQLite via node:sqlite on the real migration file). Add a test file per step.
+- Known limits to handle in step 3: editing/cancelling a delivery must be blocked or checked if sales already used that stock (on-hand must never go negative). The Stock screen has no delete of units/categories, only archive (by design).
+- This PC's dev database contains test data created while verifying step 2 (item "زەیتوونی ڕەش", categories زەیتوون/زەیت, unit کیلۆ). Safe to delete the .db file to start clean.
 - Mockup sell screen updated: client first, several items, print button (coming soon).
 - UI mockup (Kurdish, RTL, olive green on cream, 5 screens): docs/mockup/index.html. Owner approved the look, edits to come.
 
@@ -54,6 +59,7 @@ The database is per-PC and is not in git.
 2. (done, small edits pending) UI mockup docs/mockup/index.html — owner likes it. Collect the owner's edit list and apply to the mockup.
 3. (done) MVP plan approved: docs/build-plan.md. Database stays per-PC (not synced), owner OK with it (all PCs are dev PCs).
 4. (done) Step 0 + Step 1 of build plan.
-5. NEXT: Step 2 — Settings + Stock (units, categories, items, receive goods, search + category chips, edit/cancel). Then steps 3-8 in order; owner tests each step before the next.
+5. (done) Step 2 — Stock.
+6. NEXT: Step 3 — Sell (client first, several items per sale, price pre-filled and editable, stock check, paid amount, automatic debt, edit/cancel). Then steps 4-8 in order; owner tests each step before the next.
 
 How to run: `npm install` then `npm run tauri dev` (first Rust build ~3 min). DB file: %APPDATA%\com.olivestorage.app\olivestorage.db.

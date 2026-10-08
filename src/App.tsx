@@ -3,6 +3,7 @@ import { HashRouter, NavLink, Route, Routes } from "react-router-dom";
 import { BarChart3, Lock, Package, Receipt, ShoppingCart, Zap, type LucideIcon } from "lucide-react";
 import { useI18n, type Key } from "@/i18n";
 import { checkDb } from "@/db";
+import Stock from "@/pages/Stock";
 
 type Page = { path: string; key: Key; icon: LucideIcon; locked?: boolean };
 
@@ -89,7 +90,11 @@ export default function App() {
         <main className="w-full max-w-[1100px] flex-1 px-10 py-8">
           <Routes>
             {pages.map((p) => (
-              <Route key={p.path} path={p.path} element={<Placeholder title={p.key} />} />
+              <Route
+                key={p.path}
+                path={p.path}
+                element={p.path === "/stock" ? <Stock /> : <Placeholder title={p.key} />}
+              />
             ))}
           </Routes>
         </main>
