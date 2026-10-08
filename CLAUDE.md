@@ -55,7 +55,8 @@ The database is per-PC and is not in git.
 - Cost for profit: each sale line stores buy_price = the item's LAST buy price at the time of sale (kept unchanged when the sale is later edited). Owner has not been asked about this method (alternatives: average cost, FIFO) — mention it when building the Dashboard (step 6).
 - Stock guard added: a delivery cannot be cancelled/shrunk if sold stock depends on it ("insufficient").
 - Quantities in text boxes use qtyText() (Kurdish digits, "٫", no thousands separators); display uses formatQty().
-- Dev DB on this PC also holds a test sale (cancelled) for client "ئاسۆ محمد".
+- Step 4 Debts DONE and tested (2026-10-08): Debts page (src/pages/Debts.tsx, src/data/debts.ts, migration 004_payments.sql): totals, list of debtors (biggest first), "pay" modal (full debt prefilled, can't exceed debt; amount goes to the client's OLDEST unpaid sales first, one payment row per sale), client detail (sales + payment history, cancel any record with confirm). Owner's rule for cancelled sales: money the client already paid is shown as "to return" (refund due) and recorded with a Refund (also oldest first, partial allowed, cancellable). Money model: payments.kind = 'payment' | 'refund'; sale received = sales.paid + non-cancelled payments; active sale debt = total - received; cancelled sale refund_due = received - refunded. Editing a sale can never make total < money already received ("overpaid"). Sell history shows paid incl. later payments and a refund-due tag. Balance test: cash in hand = sold - still owed.
+- Dev DB on this PC holds test data: sales/payments/refunds for clients ئاسۆ, شاناز, ئاسۆ محمد (some cancelled, refunds due). Safe to delete the .db file to start clean.
 - Mockup sell screen updated: client first, several items, print button (coming soon).
 - UI mockup (Kurdish, RTL, olive green on cream, 5 screens): docs/mockup/index.html. Owner approved the look, edits to come.
 
@@ -67,6 +68,7 @@ The database is per-PC and is not in git.
 4. (done) Step 0 + Step 1 of build plan.
 5. (done) Step 2 — Stock.
 6. (done) Step 3 — Sell.
-7. NEXT: Step 4 — Debts: list clients who owe (sum of debt per client + per sale), record later payments (new `payments` table via migration 004; payments editable/cancellable), history. Then update the debt formula in src/data/sales.ts (SALE_COLS: debt = total - paid - SUM(non-cancelled payments)) and the History tab/Sell tests. Decide what happens to payments when a sale is cancelled (suggest: keep payment records, show them as money to refund/credit; ask the owner). Then steps 5-8; owner tests each step before the next.
+7. (done) Step 4 — Debts.
+8. NEXT: Step 5 — Monthly costs: three amounts per month (electricity, workers = one total, place/rent) + optional note, month picker, auto total, edit anytime with history_log; migration 005 (table e.g. monthly_costs(month 'YYYY-MM', kind, amount) with a unique key per month+kind). Then steps 6 (Dashboard + PIN; ask owner about profit cost method), 7 (Arabic QA), 8 (polish: backup on start, installer); owner tests each step before the next.
 
 How to run: `npm install` then `npm run tauri dev` (first Rust build ~3 min). DB file: %APPDATA%\com.olivestorage.app\olivestorage.db.

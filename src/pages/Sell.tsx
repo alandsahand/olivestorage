@@ -86,9 +86,11 @@ function SaleForm({
     return { ...l, q, problem, sum: q && l.price ? sales.lineTotal(q, l.price) : 0 };
   });
   const total = parsed.reduce((s, l) => s + l.sum, 0);
-  const effPaid = paidTouched ? (paid ?? 0) : total;
-  const debt = total - effPaid;
-  const overpaid = effPaid > total;
+  const later = editing?.later_paid ?? 0; // payments recorded after the sale (kept when editing)
+  // While untouched, "paid" means "everything that is still unpaid is paid now".
+  const effPaid = paidTouched ? (paid ?? 0) : Math.max(0, total - later);
+  const debt = total - effPaid - later;
+  const overpaid = effPaid + later > total;
   const canSave = !!clientName.trim() && lines.length > 0 && parsed.every((l) => !l.problem) && !overpaid && !busy;
 
   function addItem(i: Item) {
@@ -316,6 +318,11 @@ function SaleForm({
             setPaid(v);
           }}
         />
+        {later > 0 && (
+          <p className="mt-1 text-base text-muted">
+            {t("laterPaidNote")}: {formatNumber(later)} {t("currency")}
+          </p>
+        )}
         {overpaid && <p className="mt-1 text-base text-bad">{t("paidTooMuch")}</p>}
         <div className={`my-4 flex justify-between text-lg ${debt > 0 ? "font-bold text-bad" : "text-muted"}`}>
           <span>{t("debtLeft")}</span>
@@ -387,10 +394,17 @@ function History({ onEdit }: { onEdit: (id: number) => void }) {
                 <td className="p-3">{formatDateTime(s.created_at)}</td>
                 <td className="p-3 font-bold">{s.client_name}</td>
                 <td className="p-3 font-bold">{formatNumber(s.total)}</td>
-                <td className="p-3">{formatNumber(s.paid)}</td>
+                <td className="p-3">{formatNumber(s.paid + s.later_paid)}</td>
                 <td className="p-3 no-underline">
                   {dead ? (
-                    <span className="rounded-full bg-bad-l px-3 py-0.5 text-sm font-bold text-bad">{t("cancelled")}</span>
+                    <span className="flex flex-wrap gap-1.5">
+                      <span className="rounded-full bg-bad-l px-3 py-0.5 text-sm font-bold text-bad">{t("cancelled")}</span>
+                      {s.refund_due > 0 && (
+                        <span className="rounded-full bg-warn-l px-3 py-0.5 text-sm font-bold text-warn">
+                          {t("refundDueTag")}: {formatNumber(s.refund_due)}
+                        </span>
+                      )}
+                    </span>
                   ) : s.debt > 0 ? (
                     <span className="rounded-full bg-bad-l px-3 py-0.5 text-sm font-bold text-bad">{formatNumber(s.debt)}</span>
                   ) : (

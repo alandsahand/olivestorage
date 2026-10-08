@@ -5,6 +5,7 @@ import { useI18n, type Key } from "@/i18n";
 import { checkDb } from "@/db";
 import Stock from "@/pages/Stock";
 import Sell from "@/pages/Sell";
+import Debts from "@/pages/Debts";
 
 type Page = { path: string; key: Key; icon: LucideIcon; locked?: boolean };
 
@@ -95,7 +96,15 @@ export default function App() {
                 key={p.path}
                 path={p.path}
                 element={
-                  p.path === "/stock" ? <Stock /> : p.path === "/" ? <Sell /> : <Placeholder title={p.key} />
+                  p.path === "/stock" ? (
+                    <Stock />
+                  ) : p.path === "/" ? (
+                    <Sell />
+                  ) : p.path === "/debts" ? (
+                    <Debts />
+                  ) : (
+                    <Placeholder title={p.key} />
+                  )
                 }
               />
             ))}
