@@ -15,7 +15,10 @@ eq("no empty text (Arabic)", Object.entries(ar).filter(([, v]) => !v.trim()).map
 const kurdishOnly = /[ەڕۆێڵڤگپچژک]/; // ک (Kurdish kaf) is fine in Kurdish but wrong in Arabic
 const arabicOnly = /[يكةى]/;
 eq("Arabic texts contain no Kurdish-only letters", Object.entries(ar).filter(([, v]) => kurdishOnly.test(v)).map(([k, v]) => `${k}: ${v}`), []);
-eq("Kurdish texts contain no Arabic-only letters", Object.entries(ckb).filter(([, v]) => arabicOnly.test(v)).map(([k, v]) => `${k}: ${v}`), []);
+// Exception: the shop's brand name is written exactly as the owner chose (Arabic spelling) in both languages.
+const BRAND_KEYS = new Set(["appName"]);
+eq("Kurdish texts contain no Arabic-only letters", Object.entries(ckb).filter(([k, v]) => !BRAND_KEYS.has(k) && arabicOnly.test(v)).map(([k, v]) => `${k}: ${v}`), []);
+eq("brand name is identical in both languages", ckb.appName, ar.appName);
 
 // Month lists must have 12 names in both languages.
 eq("12 month names (Kurdish, Arabic)", [ckb.months.split(",").length, ar.months.split(",").length], [12, 12]);

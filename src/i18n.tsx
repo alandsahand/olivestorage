@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 export type Lang = "ckb" | "ar";
 
 const ckb = {
-  appName: "کۆگای زەیتوون",
+  appName: "عالم طرشي والزيتون",
   sell: "فرۆشتن",
   stock: "کۆگا",
   debts: "قەرزەکان",
@@ -190,7 +190,7 @@ const ckb = {
 export type Key = keyof typeof ckb;
 
 const ar: Record<Key, string> = {
-  appName: "مخزن الزيتون",
+  appName: "عالم طرشي والزيتون",
   sell: "البيع",
   stock: "المخزن",
   debts: "الديون",

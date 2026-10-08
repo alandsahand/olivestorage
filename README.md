@@ -1,4 +1,4 @@
-# Olive Storage
+# عالم طرشي والزيتون (Olive Storage)
 
 A Windows desktop app (Tauri + React + TypeScript + SQLite) for a small olive business: stock, sales with several items per invoice, customer debts and refunds, monthly costs, and an owner-only dashboard. Kurdish (Sorani) and Arabic, right-to-left.
 
@@ -24,7 +24,7 @@ Runs every automatic check (stock, sales, debts, costs, PIN security, dashboard 
 npm run tauri build
 ```
 
-The installer is created at `src-tauri/target/release/bundle/nsis/Olive Storage_<version>_x64-setup.exe`. Copy that one file to the shop PC and run it (installs for the current user, no admin needed; Windows 11 already has WebView2).
+The installer is created at `src-tauri/target/release/bundle/nsis/عالم طرشي والزيتون_<version>_x64-setup.exe`. Copy that one file to the shop PC and run it (installs for the current user, no admin needed; Windows 11 already has WebView2).
 
 ## Where the data lives
 
