@@ -373,7 +373,7 @@ function History({ onEdit }: { onEdit: (id: number) => void }) {
   if (rows && rows.length === 0) return <p className="rounded-3xl bg-white p-10 text-center text-muted shadow-sm">{t("noSales")}</p>;
 
   return (
-    <div className="rounded-3xl bg-white p-2 shadow-sm">
+    <div className="overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
       {error && <p className="m-3 rounded-xl bg-bad-l p-3 text-bad">{error}</p>}
       <table className="w-full">
         <thead>

@@ -133,7 +133,7 @@ export default function Costs() {
           </Button>
         </form>
 
-        <div className="rounded-3xl bg-white p-2 shadow-sm">
+        <div className="overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
           <h2 className="p-4 pb-2 text-xl font-extrabold">
             {t("yearOverview")} · {toArabicDigits(String(yearNo))}
           </h2>

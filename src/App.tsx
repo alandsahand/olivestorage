@@ -91,7 +91,7 @@ export default function App() {
     <HashRouter>
       <div className="flex min-h-screen">
         <Sidebar />
-        <main className="w-full max-w-[1100px] flex-1 px-10 py-8">
+        <main className="w-full min-w-0 max-w-[1100px] flex-1 px-6 py-8 xl:px-10">
           <Routes>
             {pages.map((p) => (
               <Route

@@ -35,7 +35,6 @@ const ckb = {
   date: "بەروار",
   name: "ناو",
   unit: "یەکە",
-  newUnit: "یەکەی نوێ",
   addNew: "＋ زیادکردنی نوێ",
   add: "زیادکردن",
   pick: "هەڵبژێرە...",
@@ -59,7 +58,6 @@ const ckb = {
   confirmArchiveNamed: "دڵنیایت لە شاردنەوە؟ ئەو کاڵایانەی بەکاریان دەهێنن دەمێننەوە.",
   newOnHand: "دوای وەرگرتن لە کۆگا دەبێت",
   currency: "د.ع",
-  yes: "بەڵێ",
   // sell
   sellSub: "کڕیار هەڵبژێرە، کاڵا زیاد بکە، تەواو.",
   newSale: "فرۆشتنی نوێ",
@@ -69,7 +67,6 @@ const ckb = {
   invoiceItems: "کاڵاکان",
   pickItemHint: "کاڵایەک هەڵبژێرە بۆ زیادکردن",
   price: "نرخ",
-  lineTotal: "کۆ",
   total: "کۆی گشتی",
   paid: "چەندی دا؟",
   payAll: "هەمووی دا",
@@ -116,7 +113,6 @@ const ckb = {
   laterPaidNote: "پارەی دواتر دراو",
   refundDueTag: "دەبێت بگەڕێتەوە",
   noRecords: "هیچ تۆمارێک نییە.",
-  owes: "قەرزە",
   // monthly costs
   costsSub: "تەنها سێ شت: کارەبا، کرێکاران، شوێن.",
   electricity: "کارەبا",
@@ -213,7 +209,6 @@ const ar: Record<Key, string> = {
   date: "التاريخ",
   name: "الاسم",
   unit: "الوحدة",
-  newUnit: "وحدة جديدة",
   addNew: "＋ إضافة جديد",
   add: "إضافة",
   pick: "اختر...",
@@ -237,7 +232,6 @@ const ar: Record<Key, string> = {
   confirmArchiveNamed: "هل أنت متأكد من الإخفاء؟ الأصناف التي تستخدمه تبقى كما هي.",
   newOnHand: "سيصبح المتوفر بعد الاستلام",
   currency: "د.ع",
-  yes: "نعم",
   sellSub: "اختر الزبون، أضف الأصناف، وانتهى.",
   newSale: "بيع جديد",
   salesHistory: "المبيعات",
@@ -246,11 +240,10 @@ const ar: Record<Key, string> = {
   invoiceItems: "الأصناف",
   pickItemHint: "اختر صنفاً لإضافته",
   price: "السعر",
-  lineTotal: "المجموع",
   total: "الإجمالي",
   paid: "كم دفع؟",
   payAll: "دفع الكل",
-  debtLeft: "المتبقي دين",
+  debtLeft: "الدين المتبقي",
   saveSale: "تسجيل البيع",
   printSoon: "طباعة (قريباً)",
   saleSaved: "تم تسجيل البيع",
@@ -292,7 +285,6 @@ const ar: Record<Key, string> = {
   laterPaidNote: "مدفوع لاحقاً",
   refundDueTag: "يجب إرجاعه",
   noRecords: "لا توجد سجلات.",
-  owes: "عليه",
   costsSub: "ثلاثة أشياء فقط: الكهرباء، العمال، المكان.",
   electricity: "الكهرباء",
   workers: "العمال (إجمالي الشهر)",
@@ -353,7 +345,7 @@ const ar: Record<Key, string> = {
   pinChanged: "تم تغيير الرمز",
 };
 
-const dict = { ckb, ar } as const;
+export const dict = { ckb, ar } as const;
 
 type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (k: Key) => string };
 const I18n = createContext<Ctx | null>(null);

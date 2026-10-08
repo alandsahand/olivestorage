@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test": "tsx scripts/test-stock.ts && tsx scripts/test-sales.ts && tsx scripts/test-debts.ts && tsx scripts/test-costs.ts && tsx scripts/test-auth.ts && tsx scripts/test-dashboard.ts"
+    "test": "tsx scripts/test-stock.ts && tsx scripts/test-sales.ts && tsx scripts/test-debts.ts && tsx scripts/test-costs.ts && tsx scripts/test-auth.ts && tsx scripts/test-dashboard.ts && tsx scripts/test-i18n.ts",
+    "wording": "tsx scripts/export-wording.ts"
   },
   "dependencies": {
     "@fontsource/noto-sans-arabic": "^5.3.0",

@@ -67,7 +67,7 @@ export default function Debts() {
 
       {loadError && <p className="mb-4 rounded-2xl bg-bad-l p-4 text-bad">{t("error")}</p>}
 
-      <div className="rounded-3xl bg-white p-2 shadow-sm">
+      <div className="overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
         {loaded && debtors.length === 0 ? (
           <p className="p-10 text-center text-lg text-muted">{t("noDebts")}</p>
         ) : (
@@ -108,7 +108,7 @@ export default function Debts() {
         <section className="mt-8">
           <h2 className="text-2xl font-extrabold">{t("refundSection")}</h2>
           <p className="mb-3 text-muted">{t("refundHint")}</p>
-          <div className="rounded-3xl bg-white p-2 shadow-sm">
+          <div className="overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
             <table className="w-full">
               <tbody>
                 {refunds.map((r) => (

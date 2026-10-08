@@ -120,7 +120,7 @@ export default function Stock() {
 
       {loadError && <p className="mb-4 rounded-2xl bg-bad-l p-4 text-bad">{t("error")}</p>}
 
-      <div className="rounded-3xl bg-white p-2 shadow-sm">
+      <div className="overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
         {loaded && shown.length === 0 && !loadError ? (
           <p className="p-10 text-center text-muted">{items.length === 0 ? t("empty") : t("emptyFilter")}</p>
         ) : (
@@ -128,7 +128,7 @@ export default function Stock() {
             <thead>
               <tr className="text-muted">
                 <th className="p-3 text-start text-base font-medium">{t("item")}</th>
-                <th className="p-3 text-start text-base font-medium">{t("category")}</th>
+                <th className="hidden p-3 text-start text-base font-medium xl:table-cell">{t("category")}</th>
                 <th className="p-3 text-start text-base font-medium">{t("onHand")}</th>
                 <th className="p-3 text-start text-base font-medium">{t("buyPrice")}</th>
                 <th className="p-3 text-start text-base font-medium">{t("sellPrice")}</th>
@@ -139,7 +139,7 @@ export default function Stock() {
               {shown.map((i) => (
                 <tr key={i.id} className="border-t border-line hover:bg-bg/60">
                   <td className="p-3 font-bold">{i.name}</td>
-                  <td className="p-3 text-muted">{i.category_name ?? "—"}</td>
+                  <td className="hidden p-3 text-muted xl:table-cell">{i.category_name ?? "—"}</td>
                   <td className="p-3 font-bold">
                     {formatQty(i.on_hand_milli)} {i.unit_name}{" "}
                     {i.on_hand_milli <= 0 && (
@@ -149,8 +149,8 @@ export default function Stock() {
                   <td className="p-3 font-bold">{i.last_buy_price === null ? "—" : formatNumber(i.last_buy_price)}</td>
                   <td className="p-3 font-bold">{formatNumber(i.default_sell_price)}</td>
                   <td className="whitespace-nowrap p-3 text-end">
-                    <Button small onClick={() => setDialog({ kind: "receive", item: i })}>
-                      <PackagePlus className="size-4" /> {t("receive")}
+                    <Button small onClick={() => setDialog({ kind: "receive", item: i })} title={t("receive")} aria-label={t("receive")}>
+                      <PackagePlus className="size-4" /> <span className="hidden xl:inline">{t("receive")}</span>
                     </Button>{" "}
                     <Button small variant="ghost" onClick={() => setDialog({ kind: "deliveries", item: i })} title={t("deliveries")} aria-label={t("deliveries")}>
                       <History className="size-5" />
