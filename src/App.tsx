@@ -7,6 +7,7 @@ import Stock from "@/pages/Stock";
 import Sell from "@/pages/Sell";
 import Debts from "@/pages/Debts";
 import Costs from "@/pages/Costs";
+import Dashboard from "@/pages/Dashboard";
 
 type Page = { path: string; key: Key; icon: LucideIcon; locked?: boolean };
 
@@ -105,6 +106,8 @@ export default function App() {
                     <Debts />
                   ) : p.path === "/costs" ? (
                     <Costs />
+                  ) : p.path === "/dashboard" ? (
+                    <Dashboard />
                   ) : (
                     <Placeholder title={p.key} />
                   )

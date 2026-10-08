@@ -4,22 +4,12 @@ import { useI18n, type Key } from "@/i18n";
 import { Button, ConfirmModal, MoneyInput } from "@/components/ui";
 import { formatNumber, toArabicDigits } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
+import { currentMonth, pad, shiftMonth as shift } from "@/lib/months";
 import { COST_KINDS, getMonthCosts, getYearCosts, monthTotal, saveMonthCosts } from "@/data/costs";
 import type { CostKind, MonthCosts } from "@/data/costs";
 
 const ICONS: Record<CostKind, LucideIcon> = { electricity: Zap, workers: Users, place: Home };
 const EMPTY: MonthCosts = { electricity: 0, workers: 0, place: 0 };
-
-const pad = (n: number) => String(n).padStart(2, "0");
-const currentMonth = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-};
-const shift = (month: string, by: number) => {
-  const [y, m] = month.split("-").map(Number);
-  const d = new Date(y, m - 1 + by, 1);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-};
 
 export default function Costs() {
   const { t } = useI18n();
