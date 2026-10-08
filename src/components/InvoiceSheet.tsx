@@ -12,15 +12,17 @@ export type InvoiceColumn = {
   label: Key;
   width?: string;
   align: "start" | "center";
+  currency?: boolean; // adds "(د.ع)" to the header; the cells stay plain numbers
   value: (line: SaleLine, rowNumber: number) => string;
 };
 
 export const INVOICE_COLUMNS: InvoiceColumn[] = [
-  { key: "id", label: "colId", width: "9%", align: "center", value: (_l, n) => formatNumber(n) },
+  { key: "id", label: "colId", width: "7%", align: "center", value: (_l, n) => formatNumber(n) },
   { key: "material", label: "item", align: "start", value: (l) => l.item_name },
-  { key: "unit", label: "unit", width: "16%", align: "center", value: (l) => l.unit_name },
-  { key: "weight", label: "colWeight", width: "20%", align: "center", value: (l) => formatQty(l.qty_milli) },
-  { key: "price", label: "price", width: "20%", align: "center", value: (l) => formatNumber(l.line_total) },
+  { key: "unit", label: "unit", width: "12%", align: "center", value: (l) => l.unit_name },
+  { key: "weight", label: "colWeight", width: "15%", align: "center", value: (l) => formatQty(l.qty_milli) },
+  { key: "unitPrice", label: "colUnitPrice", width: "17%", align: "center", currency: true, value: (l) => formatNumber(l.unit_price) },
+  { key: "price", label: "colAmount", width: "17%", align: "center", currency: true, value: (l) => formatNumber(l.line_total) },
 ];
 
 const cell = "border border-[#cfd4c0] px-3 py-2";
@@ -63,7 +65,7 @@ export function InvoiceSheet({ sale }: { sale: SaleDetail }) {
             {INVOICE_COLUMNS.map((c) => (
               <th key={c.key} style={{ width: c.width }} className={`${cell} ${c.align === "center" ? "text-center" : "text-start"} font-bold`}>
                 {t(c.label)}
-                {c.key === "price" && ` (${t("currency")})`}
+                {c.currency && ` (${t("currency")})`}
               </th>
             ))}
           </tr>
