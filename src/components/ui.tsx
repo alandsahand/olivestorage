@@ -1,10 +1,13 @@
-import { useEffect, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { formatNumber, parseMoney } from "@/lib/format";
 
 export const inputCls =
   "w-full rounded-2xl border-2 border-line bg-white px-4 py-3 text-lg outline-none transition focus:border-olive";
+
+// Open dialogs, innermost last: Escape closes only the top one (a confirm box over a dialog must not close both).
+const openModals: object[] = [];
 
 export function Modal({
   title,
@@ -18,11 +21,18 @@ export function Modal({
   wide?: boolean;
 }) {
   const { t } = useI18n();
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
-    const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const me = {};
+    openModals.push(me);
+    const h = (e: KeyboardEvent) => e.key === "Escape" && openModals[openModals.length - 1] === me && closeRef.current();
     window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
+    return () => {
+      window.removeEventListener("keydown", h);
+      openModals.splice(openModals.indexOf(me), 1);
+    };
+  }, []);
 
   return (
     <div
@@ -69,6 +79,20 @@ export function Button({
         small ? "px-4 py-2 text-base" : "px-6 py-3.5 text-lg"
       } ${variants[variant]} ${className}`}
     />
+  );
+}
+
+/** Long lists show this many rows first, then this many more each time "show more" is pressed. */
+export const PAGE_SIZE = 20;
+
+export function ShowMore({ onClick }: { onClick: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="p-3 text-center">
+      <Button variant="secondary" small onClick={onClick}>
+        {t("showMore")}
+      </Button>
+    </div>
   );
 }
 
@@ -136,15 +160,26 @@ export function ConfirmModal({
 }: {
   message: string;
   confirmLabel: string;
-  onConfirm: () => void;
+  onConfirm: () => unknown;
   onClose: () => void;
 }) {
   const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  // One click only: a quick double click must not run the action twice.
+  async function confirm() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await onConfirm();
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <Modal title={confirmLabel} onClose={onClose}>
       <p className="mb-6 text-lg">{message}</p>
       <div className="flex gap-3">
-        <Button variant="danger" onClick={onConfirm} className="flex-1">
+        <Button variant="danger" onClick={confirm} disabled={busy} className="flex-1">
           {confirmLabel}
         </Button>
         <Button variant="secondary" onClick={onClose} className="flex-1">

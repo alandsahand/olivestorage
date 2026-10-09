@@ -55,7 +55,7 @@ await throws("no refund on a client with nothing due", async () => debts.recordR
 
 // cannot take back a payment if that would mean refunding more than we received
 const payA = (await debts.listClientPayments(aso)).find((p) => p.sale_id === A && p.kind === "payment")!;
-await throws("cannot cancel payment already refunded", () => debts.voidPayment(payA.id), "insufficient");
+await throws("cannot cancel payment already refunded", () => debts.voidPayment(payA.id), "refunded");
 const refundRow = (await debts.listClientPayments(aso)).find((p) => p.kind === "refund")!;
 await debts.voidPayment(refundRow.id);
 eq("cancelled refund restores refund due", (await debts.listRefundsDue())[0].due, 100000);

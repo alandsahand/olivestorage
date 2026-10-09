@@ -88,7 +88,7 @@ const ckb = {
   remove: "لابردن",
   fullyPaid: "تەواو",
   // debts
-  debtsSub: "کێ قەرزداره و چەندی ماوە.",
+  debtsSub: "کێ قەرزدارە و چەندی ماوە.",
   totalDebt: "کۆی قەرزەکان",
   debtorsCount: "کڕیاری قەرزدار",
   refundsTotal: "پارەی گەڕاندنەوە",
@@ -197,6 +197,26 @@ const ckb = {
   printPdf: "چاپ / PDF",
   pdfHint: "بۆ فایلی PDF، لە لیستی چاپکەر «Microsoft Print to PDF» یان «Save as PDF» هەڵبژێرە.",
   invoicePreview: "پێشبینینی وەسڵ",
+  receiptIn: "وەسڵی وەرگرتنی پارە",
+  receiptOut: "وەسڵی گەڕاندنەوەی پارە",
+  receiptNo: "ژمارەی وەسڵ",
+  receivedFrom: "وەرگیرا لە",
+  paidBackTo: "دراوە بە",
+  amountLabel: "بڕی پارە",
+  forSales: "بۆ فرۆشتنی ژمارە",
+  remainingDebt: "قەرزی ماوە",
+  signReceiver: "واژۆی وەرگر",
+  signClient: "واژۆی کڕیار",
+  statement: "کەشفی قەرز",
+  colNo: "ژمارە",
+  statementTotal: "کۆی قەرز",
+  lastPayment: "دوایین پارەدان",
+  statementBtn: "چاپکردنی کەشفی قەرز",
+  showMore: "پیشاندانی زیاتر",
+  deliverySold: "ناکرێت: هەندێک لەم کاڵایە فرۆشراوە. سەرەتا فرۆشتنەکە بگۆڕە یان هەڵیبوەشێنەوە.",
+  alreadyRefunded: "ناکرێت: ئەم پارەیە پێشتر گەڕێندراوەتەوە بۆ کڕیار.",
+  moreThanDue: "لە بڕی ماوە زیاترە",
+  sellNoItems: "هێشتا هیچ کاڵایەک نییە. سەرەتا لە «کۆگا» کاڵا زیاد بکە و وەریبگرە.",
 } as const;
 
 export type Key = keyof typeof ckb;
@@ -389,6 +409,26 @@ const ar: Record<Key, string> = {
   printPdf: "طباعة / PDF",
   pdfHint: "للحصول على ملف PDF اختر «Microsoft Print to PDF» أو «Save as PDF» من قائمة الطابعات.",
   invoicePreview: "معاينة الفاتورة",
+  receiptIn: "وصل قبض",
+  receiptOut: "وصل صرف",
+  receiptNo: "رقم الوصل",
+  receivedFrom: "استلمنا من السيد",
+  paidBackTo: "صرفنا للسيد",
+  amountLabel: "المبلغ",
+  forSales: "عن الفواتير رقم",
+  remainingDebt: "الدين المتبقي",
+  signReceiver: "توقيع المستلم",
+  signClient: "توقيع الزبون",
+  statement: "كشف حساب",
+  colNo: "الرقم",
+  statementTotal: "إجمالي الدين",
+  lastPayment: "آخر تسديد",
+  statementBtn: "طباعة كشف الحساب",
+  showMore: "عرض المزيد",
+  deliverySold: "لا يمكن: تم بيع جزء من هذه البضاعة. عدّل البيع أو ألغه أولاً.",
+  alreadyRefunded: "لا يمكن: تم إرجاع هذا المبلغ للزبون مسبقاً.",
+  moreThanDue: "أكثر من المبلغ المستحق",
+  sellNoItems: "لا توجد أصناف بعد. أضف الأصناف من «المخزن» واستلم البضاعة أولاً.",
 };
 
 export const dict = { ckb, ar } as const;
@@ -396,7 +436,7 @@ export const dict = { ckb, ar } as const;
 type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: (k: Key) => string };
 const I18n = createContext<Ctx | null>(null);
 
-const STORAGE_KEY = "olive.lang";
+export const STORAGE_KEY = "olive.lang";
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => {

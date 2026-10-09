@@ -47,6 +47,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/006_sale_note.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "indexes for long sales lists",
+            sql: include_str!("../migrations/007_sales_indexes.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

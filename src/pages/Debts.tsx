@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import { Ban, Undo2, Wallet } from "lucide-react";
+import { Ban, Printer, Undo2, Wallet } from "lucide-react";
 import { useI18n } from "@/i18n";
-import { Button, ConfirmModal, Field, Modal, MoneyInput } from "@/components/ui";
+import { Button, ConfirmModal, Field, Modal, MoneyInput, PAGE_SIZE, ShowMore } from "@/components/ui";
+import { ReceiptModal } from "@/components/ReceiptModal";
+import { StatementModal } from "@/components/StatementModal";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import * as debts from "@/data/debts";
-import type { ClientSale, Debtor, PaymentRow, RefundDue } from "@/data/debts";
+import type { ClientSale, Debtor, PaymentRow, Receipt, RefundDue } from "@/data/debts";
 
 type Dialog =
   | { kind: "pay"; client: { id: number; name: string }; max: number }
   | { kind: "refund"; client: { id: number; name: string }; max: number }
   | { kind: "detail"; client: { id: number; name: string } }
+  | { kind: "statement"; client: { id: number; name: string } }
   | null;
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "bad" | "warn" }) {
@@ -27,6 +30,8 @@ export default function Debts() {
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [refunds, setRefunds] = useState<RefundDue[]>([]);
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [shown, setShown] = useState(PAGE_SIZE); // debtors drawn so far (the totals above always use all of them)
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
@@ -49,8 +54,10 @@ export default function Debts() {
   const totalDebt = debtors.reduce((s, d) => s + d.debt, 0);
   const totalRefund = refunds.reduce((s, r) => s + r.due, 0);
   const close = () => setDialog(null);
-  const done = () => {
+  // after a payment/refund: refresh the lists and show its receipt right away
+  const done = (r: Receipt) => {
     close();
+    setReceipt(r);
     void reload();
   };
 
@@ -81,7 +88,7 @@ export default function Debts() {
               </tr>
             </thead>
             <tbody>
-              {debtors.map((d) => (
+              {debtors.slice(0, shown).map((d) => (
                 <tr key={d.client_id} className="border-t border-line hover:bg-bg/60">
                   <td className="p-3">
                     <button className="font-bold hover:underline" onClick={() => setDialog({ kind: "detail", client: { id: d.client_id, name: d.name } })}>
@@ -93,6 +100,15 @@ export default function Debts() {
                     {formatNumber(d.debt)} {t("currency")}
                   </td>
                   <td className="whitespace-nowrap p-3 text-end">
+                    <Button
+                      small
+                      variant="ghost"
+                      title={t("statementBtn")}
+                      aria-label={t("statementBtn")}
+                      onClick={() => setDialog({ kind: "statement", client: { id: d.client_id, name: d.name } })}
+                    >
+                      <Printer className="size-5" />
+                    </Button>{" "}
                     <Button small onClick={() => setDialog({ kind: "pay", client: { id: d.client_id, name: d.name }, max: d.debt })}>
                       <Wallet className="size-4" /> {t("payDebt")}
                     </Button>
@@ -102,6 +118,7 @@ export default function Debts() {
             </tbody>
           </table>
         )}
+        {debtors.length > shown && <ShowMore onClick={() => setShown((n) => n + PAGE_SIZE)} />}
       </div>
 
       {refunds.length > 0 && (
@@ -137,6 +154,8 @@ export default function Debts() {
       {dialog?.kind === "pay" && <AmountModal mode="payment" {...dialog} onDone={done} onClose={close} />}
       {dialog?.kind === "refund" && <AmountModal mode="refund" {...dialog} onDone={done} onClose={close} />}
       {dialog?.kind === "detail" && <DetailModal client={dialog.client} onChanged={() => void reload()} onClose={close} />}
+      {dialog?.kind === "statement" && <StatementModal clientId={dialog.client.id} onClose={close} />}
+      {receipt && <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />}
     </div>
   );
 }
@@ -151,7 +170,7 @@ function AmountModal({
   mode: "payment" | "refund";
   client: { id: number; name: string };
   max: number;
-  onDone: () => void;
+  onDone: (receipt: Receipt) => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
@@ -166,8 +185,7 @@ function AmountModal({
     if (!valid || busy) return;
     setBusy(true);
     try {
-      await (mode === "payment" ? debts.recordPayment(client.id, amount as number) : debts.recordRefund(client.id, amount as number));
-      onDone();
+      onDone(await (mode === "payment" ? debts.recordPayment(client.id, amount as number) : debts.recordRefund(client.id, amount as number)));
     } catch (err) {
       setError(errorText(err));
       setBusy(false);
@@ -180,7 +198,7 @@ function AmountModal({
         <div className="mb-4 rounded-2xl bg-olive-l p-4 text-olive-d">
           {mode === "payment" ? t("debt") : t("refundDueTag")}: <b>{formatNumber(max)} {t("currency")}</b>
         </div>
-        <Field label={`${mode === "payment" ? t("payAmount") : t("refundAmount")} (${t("currency")})`} error={amount !== null && amount > max ? t("paidTooMuch") : error}>
+        <Field label={`${mode === "payment" ? t("payAmount") : t("refundAmount")} (${t("currency")})`} error={amount !== null && amount > max ? t("moreThanDue") : error}>
           <MoneyInput value={amount} onChange={setAmount} autoFocus />
         </Field>
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -211,6 +229,7 @@ function DetailModal({
   const [sales, setSales] = useState<ClientSale[]>([]);
   const [pays, setPays] = useState<PaymentRow[]>([]);
   const [voiding, setVoiding] = useState<number | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -250,7 +269,7 @@ function DetailModal({
               <span>
                 {t("saleNo")} {formatNumber(s.id)} · {formatDate(s.created_at)}
                 <span className="block text-base text-muted">
-                  {t("total")}: {formatNumber(s.total)} · {t("paid")} {formatNumber(s.paid + s.later_paid)}
+                  {t("total")}: {formatNumber(s.total)} · {t("paidAmount")}: {formatNumber(s.paid + s.later_paid)}
                 </span>
               </span>
               {s.debt > 0 ? (
@@ -284,9 +303,14 @@ function DetailModal({
                     {dead ? (
                       <span className="rounded-full bg-bad-l px-3 py-0.5 text-sm font-bold text-bad">{t("cancelled")}</span>
                     ) : (
-                      <Button small variant="danger" onClick={() => setVoiding(p.id)}>
-                        <Ban className="size-4" /> {t("cancel")}
-                      </Button>
+                      <>
+                        <Button small variant="ghost" onClick={() => setReceipt(debts.receiptFromRows(client.name, p, pays))}>
+                          <Printer className="size-4" />
+                        </Button>{" "}
+                        <Button small variant="danger" onClick={() => setVoiding(p.id)}>
+                          <Ban className="size-4" /> {t("cancel")}
+                        </Button>
+                      </>
                     )}
                   </td>
                 </tr>
@@ -295,6 +319,7 @@ function DetailModal({
           </tbody>
         </table>
       )}
+      {receipt && <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />}
       {voiding !== null && (
         <ConfirmModal message={t("confirmVoidPayment")} confirmLabel={t("voidRecord")} onConfirm={doVoid} onClose={() => setVoiding(null)} />
       )}

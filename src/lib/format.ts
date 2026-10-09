@@ -12,8 +12,11 @@ export const toArabicDigits = (s: string) => s.replace(/[0-9]/g, (d) => ARABIC_I
 
 export const formatNumber = (n: number) => toArabicDigits(Math.round(n).toLocaleString("en-US"));
 
+/** At most 12 digits (999 billion IQD): keeps every amount an exact whole number. */
+const MAX_MONEY_DIGITS = 12;
+
 export function parseMoney(s: string): number | null {
-  const digits = toLatinDigits(s).replace(/[^0-9]/g, "");
+  const digits = toLatinDigits(s).replace(/[^0-9]/g, "").slice(0, MAX_MONEY_DIGITS);
   return digits ? parseInt(digits, 10) : null;
 }
 
@@ -22,7 +25,8 @@ export function parseQty(s: string): number | null {
   const clean = toLatinDigits(s).replace(/[٫,،]/g, ".").replace(/[^0-9.]/g, "");
   const f = parseFloat(clean);
   if (!Number.isFinite(f) || f <= 0) return null;
-  return Math.round(f * 1000);
+  const milli = Math.round(f * 1000);
+  return milli > 0 ? milli : null; // e.g. "0.0001" rounds to nothing
 }
 
 export function formatQty(milli: number): string {

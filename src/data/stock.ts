@@ -176,8 +176,13 @@ export async function archiveItem(id: number) {
 
 /* ---------- deliveries (stock in) ---------- */
 
+/** Quantity in whole thousandths and price in whole dinars, both above zero. */
+function checkDelivery(qty_milli: number, buy_price: number) {
+  if (!Number.isInteger(qty_milli) || qty_milli <= 0 || !Number.isInteger(buy_price) || buy_price <= 0) throw new Error("invalid amount");
+}
+
 export async function receive(item_id: number, qty_milli: number, buy_price: number): Promise<number> {
-  if (!(qty_milli > 0) || !(buy_price > 0)) throw new Error("invalid amount");
+  checkDelivery(qty_milli, buy_price);
   const db = await getDb();
   const res = await db.execute(
     "INSERT INTO stock_in (item_id, qty_milli, buy_price, created_at) VALUES ($1,$2,$3,$4)",
@@ -197,12 +202,12 @@ export async function listDeliveries(item_id: number): Promise<Delivery[]> {
 }
 
 export async function editDelivery(id: number, qty_milli: number, buy_price: number) {
-  if (!(qty_milli > 0) || !(buy_price > 0)) throw new Error("invalid amount");
+  checkDelivery(qty_milli, buy_price);
   const db = await getDb();
   const old = await db.select<Delivery[]>("SELECT * FROM stock_in WHERE id = $1", [id]);
   if (!old.length || old[0].cancelled_at) throw new Error("not editable");
-  // Stock must never go below what was already sold.
-  if ((await onHand(old[0].item_id)) - old[0].qty_milli + qty_milli < 0) throw new Error("insufficient");
+  // Stock must never go below what was already sold ("sold": the owner must change the sale first).
+  if ((await onHand(old[0].item_id)) - old[0].qty_milli + qty_milli < 0) throw new Error("sold");
   await db.execute("UPDATE stock_in SET qty_milli=$1, buy_price=$2 WHERE id=$3", [qty_milli, buy_price, id]);
   await log("stock_in", id, "update", {
     from: { qty_milli: old[0].qty_milli, buy_price: old[0].buy_price },
@@ -214,7 +219,8 @@ export async function voidDelivery(id: number) {
   const db = await getDb();
   const old = await db.select<Delivery[]>("SELECT * FROM stock_in WHERE id = $1", [id]);
   if (!old.length) throw new Error("not found");
-  if (!old[0].cancelled_at && (await onHand(old[0].item_id)) - old[0].qty_milli < 0) throw new Error("insufficient");
+  if (old[0].cancelled_at) return; // already cancelled: nothing to do (a double click must not log twice)
+  if ((await onHand(old[0].item_id)) - old[0].qty_milli < 0) throw new Error("sold");
   await db.execute("UPDATE stock_in SET cancelled_at = $1 WHERE id = $2 AND cancelled_at IS NULL", [now(), id]);
-  await log("stock_in", id, "cancel", {});
+  await log("stock_in", id, "cancel", { qty_milli: old[0].qty_milli, buy_price: old[0].buy_price });
 }

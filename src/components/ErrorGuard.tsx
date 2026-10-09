@@ -1,6 +1,6 @@
 import { Component, useEffect, useState, type ReactNode } from "react";
 import { TriangleAlert, X } from "lucide-react";
-import { useI18n } from "@/i18n";
+import { dict, STORAGE_KEY, useI18n, type Key } from "@/i18n";
 
 /** Shows a red banner when any background task fails (a database call nobody caught), instead of failing silently. */
 export function ErrorBanner() {
@@ -30,7 +30,14 @@ export function ErrorBanner() {
 
 /** Last line of defence: if a screen crashes while drawing, show a calm message and a reload button, never a blank window. */
 function CrashScreen() {
-  const { t } = useI18n();
+  // Read the language straight from storage: this screen must work even when the language provider itself is what crashed.
+  let lang: "ckb" | "ar" = "ckb";
+  try {
+    if (localStorage.getItem(STORAGE_KEY) === "ar") lang = "ar";
+  } catch {
+    /* ignore */
+  }
+  const t = (k: Key) => dict[lang][k];
   return (
     <div className="grid min-h-screen place-items-center p-6">
       <div className="max-w-md rounded-3xl bg-white p-8 text-center shadow-sm">

@@ -475,7 +475,8 @@ function SecurityModal({ onClose }: { onClose: () => void }) {
   const waitMsg = wait > 0 ? `${t("tooManyTries")}: ${toArabicDigits(String(wait))} ${t("seconds")}` : error;
 
   return (
-    <Modal title={t("security")} onClose={onClose}>
+    // While a new recovery code is on screen the dialog only closes with "done", so the code cannot be lost by a stray click.
+    <Modal title={t("security")} onClose={mode === "code" ? () => {} : onClose}>
       {mode === "menu" && (
         <div className="space-y-3">
           {okMsg && <p className="flex items-center gap-2 rounded-xl bg-good-l p-3 font-bold text-good"><Check className="size-5" /> {okMsg}</p>}

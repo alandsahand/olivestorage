@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Pencil, Plus, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button, ConfirmModal, Field, MoneyInput, Modal, inputCls } from "@/components/ui";
-import { formatDate, formatNumber, formatQty, parseQty, qtyText } from "@/lib/format";
+import { formatDateTime, formatNumber, formatQty, parseQty, qtyText } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import * as db from "@/data/stock";
 import type { Delivery, Item, Named } from "@/data/stock";
@@ -119,6 +119,7 @@ export function ItemForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     const err: Record<string, string> = {};
     if (!name.trim()) err.name = t("required");
     if (!unitId) err.unit = t("required");
@@ -187,6 +188,7 @@ export function ReceiveForm({ item, onSaved, onClose }: { item: Item; onSaved: (
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return; // Enter pressed twice must not receive the goods twice
     const err: Record<string, string> = {};
     if (!q) err.qty = t("invalidNumber");
     if (!price || price <= 0) err.price = t("invalidNumber");
@@ -292,7 +294,7 @@ export function DeliveriesModal({ item, onChanged, onClose }: { item: Item; onCh
             const dead = d.cancelled_at !== null;
             return (
               <tr key={d.id} className={`border-t border-line ${dead ? "text-muted line-through" : ""}`}>
-                <td className="p-2">{formatDate(d.created_at)}</td>
+                <td className="p-2">{formatDateTime(d.created_at)}</td>
                 {editing === d.id ? (
                   <>
                     <td className="p-2">

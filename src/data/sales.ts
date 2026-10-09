@@ -203,7 +203,8 @@ const SALE_COLS = `s.id, s.client_id, c.name AS client_name, s.total, s.paid, s.
        s.rev, s.created_at, s.cancelled_at,
        (SELECT COUNT(*) FROM sale_lines l WHERE l.sale_id = s.id AND l.rev = s.rev) AS line_count`;
 
-export async function listSales(limit = 200): Promise<Sale[]> {
+/** Newest sales first. Callers page through the list by raising `limit` (ask for one extra row to know if more exist). */
+export async function listSales(limit = 1_000_000): Promise<Sale[]> {
   const db = await getDb();
   const rows = await db.select<SaleRow[]>(
     `SELECT ${SALE_COLS} FROM sales s JOIN clients c ON c.id = s.client_id

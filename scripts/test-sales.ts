@@ -64,8 +64,8 @@ eq("failed edit changed nothing", (await sales.getSale(s1))!.total, 240000);
 eq("failed edit left no orphan lines", (sqlite.prepare("SELECT COUNT(*) AS n FROM sale_lines WHERE sale_id = ?1").get(s1) as { n: number }).n, 3);
 
 // --- the old stock guard: cannot cancel/shrink a delivery that sales already used
-await throws("cannot cancel a delivery that sold stock depends on", () => stock.voidDelivery(dOlives), "insufficient");
-await throws("cannot shrink a delivery below what was sold", () => stock.editDelivery(dOlives, 10000, 5800), "insufficient");
+await throws("cannot cancel a delivery that sold stock depends on", () => stock.voidDelivery(dOlives), "sold");
+await throws("cannot shrink a delivery below what was sold", () => stock.editDelivery(dOlives, 10000, 5800), "sold");
 await stock.editDelivery(dOlives, 95000, 5800);
 eq("shrinking within sold limits is allowed", await hand(olives), 95000 + 10000 - 32000 - 2500);
 

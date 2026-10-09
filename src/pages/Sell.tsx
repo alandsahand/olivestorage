@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ban, Check, Minus, Pencil, Plus, Printer, Search, X } from "lucide-react";
 import { useI18n } from "@/i18n";
-import { Button, Chip, ConfirmModal, MoneyInput, inputCls } from "@/components/ui";
+import { Button, Chip, ConfirmModal, MoneyInput, PAGE_SIZE, ShowMore, inputCls } from "@/components/ui";
 import { formatDateTime, formatNumber, formatQty, normalizeText, parseQty, qtyText } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import { InvoiceModal } from "@/components/InvoiceModal";
@@ -53,11 +53,14 @@ function SaleForm({
   const [note, setNote] = useState(editing?.note ?? "");
   const [saved, setSaved] = useState<{ id: number; total: number } | null>(null);
 
+  const [loaded, setLoaded] = useState(false);
+
   const reload = useCallback(async () => {
     const [i, c, cl] = await Promise.all([stock.listItems(), stock.listCategories(), sales.listClients()]);
     setItems(i);
     setCategories(c);
     setClients(cl);
+    setLoaded(true);
   }, []);
   useEffect(() => {
     void reload();
@@ -164,7 +167,7 @@ function SaleForm({
             </Chip>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-3">
           {shown.map((i) => {
             const avail = available(i.id);
             const inCart = lines.some((l) => l.item_id === i.id);
@@ -195,6 +198,12 @@ function SaleForm({
             );
           })}
         </div>
+        {loaded && shown.length === 0 && (
+          // first day: no items yet, tell the owner where to add them; otherwise the search/filter found nothing
+          <p className="rounded-3xl bg-white p-8 text-center text-lg text-muted shadow-sm">
+            {items.length === 0 ? t("sellNoItems") : t("emptyFilter")}
+          </p>
+        )}
       </div>
 
       {/* invoice */}
@@ -374,8 +383,15 @@ function History({ onEdit, onPrint }: { onEdit: (id: number) => void; onPrint: (
   const [rows, setRows] = useState<Sale[] | null>(null);
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  // Only the newest rows are drawn; "show more" adds another page. Reloads (after a cancel) keep the current size.
+  const [shown, setShown] = useState(PAGE_SIZE);
+  const [more, setMore] = useState(false);
 
-  const load = useCallback(() => sales.listSales().then(setRows), []);
+  const load = useCallback(async () => {
+    const list = await sales.listSales(shown + 1); // one extra row tells us whether more exist
+    setMore(list.length > shown);
+    setRows(list.slice(0, shown));
+  }, [shown]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -453,6 +469,7 @@ function History({ onEdit, onPrint }: { onEdit: (id: number) => void; onPrint: (
           })}
         </tbody>
       </table>
+      {more && <ShowMore onClick={() => setShown((n) => n + PAGE_SIZE)} />}
       {cancelId !== null && (
         <ConfirmModal
           message={t("confirmCancelSale")}
