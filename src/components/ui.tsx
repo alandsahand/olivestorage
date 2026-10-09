@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { useI18n } from "@/i18n";
 import { formatNumber, parseMoney } from "@/lib/format";
 
@@ -34,7 +35,9 @@ export function Modal({
     };
   }, []);
 
-  return (
+  // Drawn straight into <body>: a dialog opened from the sidebar (Shop info, Backup) must sit above everything,
+  // also above the Sell page's sticky invoice card, which a dialog inside the sticky sidebar could not cover.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
@@ -54,7 +57,8 @@ export function Modal({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -79,6 +83,16 @@ export function Button({
         small ? "px-4 py-2 text-base" : "px-6 py-3.5 text-lg"
       } ${variants[variant]} ${className}`}
     />
+  );
+}
+
+/** The search box used above lists. */
+export function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  return (
+    <div className="mb-4 flex items-center gap-3 rounded-2xl border-2 border-line bg-white px-4 py-3 focus-within:border-olive">
+      <Search className="size-5 text-muted" />
+      <input className="flex-1 bg-transparent text-lg outline-none" placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
+    </div>
   );
 }
 

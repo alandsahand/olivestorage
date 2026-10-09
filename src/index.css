@@ -31,6 +31,8 @@
   .print-area { display: block !important; }
   html, body { background: #fff !important; height: auto !important; }
   .invoice-sheet { box-shadow: none !important; border: 0 !important; padding: 0 !important; }
+  /* at least one full A4 page (297 mm - 2 x 12 mm margins, a little less to stay on one page), so the footer sits at the bottom */
+  .invoice-sheet { min-height: 270mm; }
 }
 .invoice-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .invoice-sheet thead { display: table-header-group; }   /* header repeats on every page */

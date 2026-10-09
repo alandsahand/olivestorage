@@ -1,4 +1,5 @@
 import { getDb } from "../db";
+import type { BuyRef, RatioDir } from "../lib/units";
 
 export type Named = { id: number; name: string };
 
@@ -12,6 +13,11 @@ export type Item = {
   default_sell_price: number;
   on_hand_milli: number;
   last_buy_price: number | null;
+  // bought in another unit (null = bought and stored in the same unit), see src/lib/units.ts
+  buy_unit_id: number | null;
+  buy_unit_name: string | null;
+  buy_ratio_milli: number | null;
+  buy_ratio_dir: RatioDir | null;
 };
 
 export type Delivery = {
@@ -21,6 +27,7 @@ export type Delivery = {
   buy_price: number;
   created_at: string;
   cancelled_at: string | null;
+  purchase_id: number | null; // null = an old delivery (before purchases existed)
 };
 
 const now = () => new Date().toISOString();
@@ -92,19 +99,16 @@ export const archiveCategory = (id: number) => archiveNamed("categories", id);
 
 /* ---------- items ---------- */
 
-// Sold quantity of an item = current lines of visible, non-cancelled sales (see 003_sales.sql).
-const SOLD_SQL = `(SELECT COALESCE(SUM(l.qty_milli), 0) FROM sale_lines l
-                    JOIN sales sa ON sa.id = l.sale_id AND l.rev = sa.rev
-                   WHERE sa.rev >= 1 AND sa.cancelled_at IS NULL AND l.item_id = ITEM_ID)`;
+// Sold quantity of an item = what really left the shop: live sales minus their live returns
+// (VIEW live_sold, 012_sale_returns.sql).
+const SOLD_SQL = `(SELECT COALESCE(SUM(qty_milli), 0) FROM live_sold WHERE item_id = ITEM_ID)`;
 
-/** Quantity on hand (thousandths). `excludeSaleId` ignores one sale's lines (used when editing it). */
+/** Quantity on hand (thousandths). `excludeSaleId` ignores one sale (its lines AND its returns), used when editing it. */
 export async function onHand(item_id: number, excludeSaleId = 0): Promise<number> {
   const db = await getDb();
   const rows = await db.select<{ n: number }[]>(
-    `SELECT COALESCE((SELECT SUM(qty_milli) FROM stock_in WHERE item_id = $1 AND cancelled_at IS NULL), 0)
-          - (SELECT COALESCE(SUM(l.qty_milli), 0) FROM sale_lines l
-               JOIN sales sa ON sa.id = l.sale_id AND l.rev = sa.rev
-              WHERE sa.rev >= 1 AND sa.cancelled_at IS NULL AND l.item_id = $1 AND sa.id <> $2) AS n`,
+    `SELECT COALESCE((SELECT SUM(qty_milli) FROM live_stock_in WHERE item_id = $1), 0)
+          - (SELECT COALESCE(SUM(qty_milli), 0) FROM live_sold WHERE item_id = $1 AND sale_id <> $2) AS n`,
     [item_id, excludeSaleId],
   );
   return rows[0].n;
@@ -113,7 +117,7 @@ export async function onHand(item_id: number, excludeSaleId = 0): Promise<number
 export async function lastBuyPrice(item_id: number): Promise<number | null> {
   const db = await getDb();
   const rows = await db.select<{ p: number }[]>(
-    "SELECT buy_price AS p FROM stock_in WHERE item_id = $1 AND cancelled_at IS NULL ORDER BY created_at DESC, id DESC LIMIT 1",
+    "SELECT buy_price AS p FROM live_stock_in WHERE item_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1",
     [item_id],
   );
   return rows.length ? rows[0].p : null;
@@ -125,15 +129,16 @@ export async function listItems(): Promise<Item[]> {
   return db.select<Item[]>(
     `SELECT i.id, i.name, i.category_id, i.unit_id,
             c.name AS category_name, u.name AS unit_name, i.default_sell_price,
-            COALESCE((SELECT SUM(s.qty_milli) FROM stock_in s
-                       WHERE s.item_id = i.id AND s.cancelled_at IS NULL), 0)
+            i.buy_unit_id, bu.name AS buy_unit_name, i.buy_ratio_milli, i.buy_ratio_dir,
+            COALESCE((SELECT SUM(s.qty_milli) FROM live_stock_in s WHERE s.item_id = i.id), 0)
               - ${SOLD_SQL.replace("ITEM_ID", "i.id")} AS on_hand_milli,
-            (SELECT s.buy_price FROM stock_in s
-              WHERE s.item_id = i.id AND s.cancelled_at IS NULL
+            (SELECT s.buy_price FROM live_stock_in s
+              WHERE s.item_id = i.id
               ORDER BY s.created_at DESC, s.id DESC LIMIT 1) AS last_buy_price
        FROM items i
        LEFT JOIN categories c ON c.id = i.category_id
        JOIN units u ON u.id = i.unit_id
+       LEFT JOIN units bu ON bu.id = i.buy_unit_id
       WHERE i.archived = 0
       ORDER BY i.name`,
   );
@@ -145,23 +150,29 @@ export type ItemInput = {
   category_id: number | null;
   unit_id: number;
   default_sell_price: number;
+  buy?: BuyRef | null; // bought in another unit; null/absent = same unit
 };
 
 export async function saveItem(input: ItemInput): Promise<number> {
   const name = input.name.trim();
   if (!name) throw new Error("name required");
+  const buy = input.buy ?? null;
+  if (buy && (buy.unit_id === input.unit_id || !Number.isInteger(buy.ratio_milli) || buy.ratio_milli <= 0 || (buy.dir !== "buy" && buy.dir !== "store"))) {
+    throw new Error("invalid amount");
+  }
+  const ref = [buy?.unit_id ?? null, buy?.ratio_milli ?? null, buy?.dir ?? null];
   const db = await getDb();
   if (input.id) {
     await db.execute(
-      "UPDATE items SET name=$1, category_id=$2, unit_id=$3, default_sell_price=$4 WHERE id=$5",
-      [name, input.category_id, input.unit_id, input.default_sell_price, input.id],
+      "UPDATE items SET name=$1, category_id=$2, unit_id=$3, default_sell_price=$4, buy_unit_id=$5, buy_ratio_milli=$6, buy_ratio_dir=$7 WHERE id=$8",
+      [name, input.category_id, input.unit_id, input.default_sell_price, ...ref, input.id],
     );
     await log("items", input.id, "update", { ...input, name });
     return input.id;
   }
   const res = await db.execute(
-    "INSERT INTO items (name, category_id, unit_id, default_sell_price, created_at) VALUES ($1,$2,$3,$4,$5)",
-    [name, input.category_id, input.unit_id, input.default_sell_price, now()],
+    "INSERT INTO items (name, category_id, unit_id, default_sell_price, buy_unit_id, buy_ratio_milli, buy_ratio_dir, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+    [name, input.category_id, input.unit_id, input.default_sell_price, ...ref, now()],
   );
   const id = res.lastInsertId as number;
   await log("items", id, "create", { ...input, name });
@@ -193,19 +204,25 @@ export async function receive(item_id: number, qty_milli: number, buy_price: num
   return id;
 }
 
+/** An item's history: old deliveries (cancelled ones too) and the current lines of live purchases. */
 export async function listDeliveries(item_id: number): Promise<Delivery[]> {
   const db = await getDb();
   return db.select<Delivery[]>(
-    "SELECT id, item_id, qty_milli, buy_price, created_at, cancelled_at FROM stock_in WHERE item_id = $1 ORDER BY created_at DESC, id DESC",
+    `SELECT si.id, si.item_id, si.qty_milli, si.buy_price, si.created_at, si.cancelled_at, si.purchase_id
+       FROM stock_in si LEFT JOIN purchases p ON p.id = si.purchase_id
+      WHERE si.item_id = $1
+        AND (si.purchase_id IS NULL OR (p.rev >= 1 AND si.purchase_rev = p.rev AND p.cancelled_at IS NULL))
+      ORDER BY si.created_at DESC, si.id DESC`,
     [item_id],
   );
 }
 
+// Only old deliveries are edited here; a purchase's lines are changed by editing the purchase.
 export async function editDelivery(id: number, qty_milli: number, buy_price: number) {
   checkDelivery(qty_milli, buy_price);
   const db = await getDb();
   const old = await db.select<Delivery[]>("SELECT * FROM stock_in WHERE id = $1", [id]);
-  if (!old.length || old[0].cancelled_at) throw new Error("not editable");
+  if (!old.length || old[0].cancelled_at || old[0].purchase_id !== null) throw new Error("not editable");
   // Stock must never go below what was already sold ("sold": the owner must change the sale first).
   if ((await onHand(old[0].item_id)) - old[0].qty_milli + qty_milli < 0) throw new Error("sold");
   await db.execute("UPDATE stock_in SET qty_milli=$1, buy_price=$2 WHERE id=$3", [qty_milli, buy_price, id]);
@@ -219,6 +236,7 @@ export async function voidDelivery(id: number) {
   const db = await getDb();
   const old = await db.select<Delivery[]>("SELECT * FROM stock_in WHERE id = $1", [id]);
   if (!old.length) throw new Error("not found");
+  if (old[0].purchase_id !== null) throw new Error("not editable");
   if (old[0].cancelled_at) return; // already cancelled: nothing to do (a double click must not log twice)
   if ((await onHand(old[0].item_id)) - old[0].qty_milli < 0) throw new Error("sold");
   await db.execute("UPDATE stock_in SET cancelled_at = $1 WHERE id = $2 AND cancelled_at IS NULL", [now(), id]);

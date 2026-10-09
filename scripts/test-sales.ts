@@ -50,28 +50,32 @@ eq("2.5 x 7,501 rounded to whole IQD", (await sales.getSale(s2))!.total, 18753);
 
 // --- a later delivery at a new price must not change the cost of an already-sold line
 await stock.receive(olives, 10000, 9000); // last buy price is now 9,000
-// --- edit: 32 kg olives (was 25), drop the oil, paid 237,500; own old lines are freed first
-await sales.updateSale(s1, { client_name: "Aso", paid: 237500, lines: [{ item_id: olives, qty_milli: 32000, unit_price: 7500 }] });
+// --- edit is MONEY ONLY (owner 2026-10-10): items and quantities are locked (goods coming back = a return)
+const s1Lines = (olivePrice: number, oliveQty = 25000) => [
+  { item_id: olives, qty_milli: oliveQty, unit_price: olivePrice },
+  { item_id: oil, qty_milli: 2000, unit_price: 45000 },
+];
+await throws("edit cannot change a quantity", () => sales.updateSale(s1, { client_name: "Aso", paid: 0, lines: s1Lines(7500, 32000) }), "lines locked");
+await throws("edit cannot drop an item", () =>
+  sales.updateSale(s1, { client_name: "Aso", paid: 0, lines: [{ item_id: olives, qty_milli: 25000, unit_price: 7500 }] }), "lines locked");
+eq("refused edits left no orphan lines", (sqlite.prepare("SELECT COUNT(*) AS n FROM sale_lines WHERE sale_id = ?1").get(s1) as { n: number }).n, 2);
+await sales.updateSale(s1, { client_name: "Aso", paid: 237500, lines: s1Lines(8000) }); // olives now 8,000 a kg
 sale = (await sales.getSale(s1))!;
-eq("edit recalculates total", sale.total, 240000);
-eq("edit recalculates paid and debt", [sale.paid, sale.debt], [237500, 2500]);
+eq("edit recalculates total", sale.total, 200000 + 90000);
+eq("edit recalculates paid and debt", [sale.paid, sale.debt], [237500, 52500]);
 eq("edit keeps the original cost snapshot", sale.lines[0].buy_price, 5800);
-eq("edit gave the dropped oil back to stock", await hand(oil), 10000);
-eq("edit took the extra olives out of stock", await hand(olives), 100000 + 10000 - 32000 - 2500);
-eq("old revision kept as history", (sqlite.prepare("SELECT COUNT(*) AS n FROM sale_lines WHERE sale_id = ?1").get(s1) as { n: number }).n, 3);
-await throws("edit cannot exceed stock (own lines freed, nothing more)", () => sales.updateSale(s1, { client_name: "Aso", paid: 0, lines: [{ item_id: olives, qty_milli: 200000, unit_price: 7500 }] }), "insufficient");
-eq("failed edit changed nothing", (await sales.getSale(s1))!.total, 240000);
-eq("failed edit left no orphan lines", (sqlite.prepare("SELECT COUNT(*) AS n FROM sale_lines WHERE sale_id = ?1").get(s1) as { n: number }).n, 3);
+eq("a money edit does not touch the stock", [await hand(olives), await hand(oil)], [100000 + 10000 - 25000 - 2500, 8000]);
+eq("old revision kept as history", (sqlite.prepare("SELECT COUNT(*) AS n FROM sale_lines WHERE sale_id = ?1").get(s1) as { n: number }).n, 4);
 
 // --- the old stock guard: cannot cancel/shrink a delivery that sales already used
 await throws("cannot cancel a delivery that sold stock depends on", () => stock.voidDelivery(dOlives), "sold");
 await throws("cannot shrink a delivery below what was sold", () => stock.editDelivery(dOlives, 10000, 5800), "sold");
 await stock.editDelivery(dOlives, 95000, 5800);
-eq("shrinking within sold limits is allowed", await hand(olives), 95000 + 10000 - 32000 - 2500);
+eq("shrinking within sold limits is allowed", await hand(olives), 95000 + 10000 - 25000 - 2500);
 
 // --- cancel a sale: stock returns, debt disappears from lists, history kept
 await sales.cancelSale(s2);
-eq("cancelled sale returns its stock", await hand(olives), 95000 + 10000 - 32000);
+eq("cancelled sale returns its stock", await hand(olives), 95000 + 10000 - 25000);
 const list = await sales.listSales();
 eq("cancelled sale stays listed, marked cancelled", list.map((x) => [x.id, x.cancelled_at !== null]), [[s2, true], [s1, false]]);
 await throws("cancelled sale cannot be edited", () => sales.updateSale(s2, { client_name: "Shanaz", paid: 0, lines: [{ item_id: olives, qty_milli: 1000, unit_price: 7500 }] }), "not editable");

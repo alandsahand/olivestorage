@@ -6,6 +6,7 @@ import { formatDateTime, formatNumber, formatQty, parseQty, qtyText } from "@/li
 import { useErrorText } from "@/lib/errors";
 import * as db from "@/data/stock";
 import type { Delivery, Item, Named } from "@/data/stock";
+import { reverseRatio, type RatioDir } from "@/lib/units";
 
 /* ---------- helpers ---------- */
 
@@ -114,8 +115,19 @@ export function ItemForm({
   const [categoryId, setCategoryId] = useState<number | null>(item ? item.category_id : defaultCategoryId);
   const [unitId, setUnitId] = useState<number | null>(item?.unit_id ?? null);
   const [price, setPrice] = useState<number | null>(item?.default_sell_price ?? null);
+  // bought in another unit (docs/flow.md section 7): off for most items
+  const [buyOn, setBuyOn] = useState(!!item?.buy_unit_id);
+  const [buyUnitId, setBuyUnitId] = useState<number | null>(item?.buy_unit_id ?? null);
+  // default (owner): "1 jar = ? kg" — how much of the buying unit makes ONE store unit
+  const [dir, setDir] = useState<RatioDir>(item?.buy_ratio_dir ?? "store");
+  const [ratio, setRatio] = useState(item?.buy_ratio_milli ? qtyText(item.buy_ratio_milli) : "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+
+  const unitName = (id: number | null) => (id === null ? "؟" : (units.find((u) => u.id === id)?.name ?? (id === item?.buy_unit_id ? item?.buy_unit_name : item?.unit_name) ?? "؟"));
+  const storeName = unitName(unitId);
+  const buyName = unitName(buyUnitId);
+  const ratioMilli = parseQty(ratio);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -124,6 +136,8 @@ export function ItemForm({
     if (!name.trim()) err.name = t("required");
     if (!unitId) err.unit = t("required");
     if (!price || price <= 0) err.price = t("invalidNumber");
+    if (buyOn && (!buyUnitId || buyUnitId === unitId)) err.buyUnit = t("required");
+    if (buyOn && !ratioMilli) err.ratio = t("invalidNumber");
     setErrors(err);
     if (Object.keys(err).length) return;
     setBusy(true);
@@ -134,6 +148,7 @@ export function ItemForm({
         category_id: categoryId,
         unit_id: unitId as number,
         default_sell_price: price as number,
+        buy: buyOn ? { unit_id: buyUnitId as number, ratio_milli: ratioMilli as number, dir } : null,
       });
       onSaved();
     } catch {
@@ -156,7 +171,54 @@ export function ItemForm({
           onCreate={createCategory}
           noneLabel={t("noCategory")}
         />
-        <PickOrAdd label={t("unit")} options={units} value={unitId} onChange={setUnitId} onCreate={createUnit} error={errors.unit} />
+        <PickOrAdd label={t("storeUnit")} options={units} value={unitId} onChange={setUnitId} onCreate={createUnit} error={errors.unit} />
+        <label className="mb-4 flex cursor-pointer items-center gap-3 text-lg font-bold">
+          <input type="checkbox" className="size-6 accent-olive" checked={buyOn} onChange={(e) => setBuyOn(e.target.checked)} />
+          {t("buyDifferent")}
+        </label>
+        {buyOn && (
+          <div className="mb-4 rounded-2xl bg-olive-l/60 p-4">
+            <PickOrAdd
+              label={t("buyUnit")}
+              options={units.filter((u) => u.id !== unitId)}
+              value={buyUnitId}
+              onChange={setBuyUnitId}
+              onCreate={createUnit}
+              error={errors.buyUnit}
+            />
+            <span className="mb-1.5 block font-bold">{t("refHow")}</span>
+            {/* the owner writes the reference whichever way is easier for this item */}
+            <div className="mb-3 flex flex-wrap gap-2">
+              {(["store", "buy"] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDir(d)}
+                  className={`rounded-full border-2 px-4 py-1.5 font-medium ${dir === d ? "border-olive bg-olive text-white" : "border-line bg-white hover:border-olive"}`}
+                >
+                  ١ {d === "buy" ? buyName : storeName} = ؟ {d === "buy" ? storeName : buyName}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 text-lg font-bold">
+              <span className="whitespace-nowrap">١ {dir === "buy" ? buyName : storeName} =</span>
+              <input
+                className={`${inputCls} !w-28 text-center`}
+                inputMode="decimal"
+                aria-label={t("refHow")}
+                value={ratio}
+                onChange={(e) => setRatio(e.target.value)}
+              />
+              <span className="whitespace-nowrap">{dir === "buy" ? storeName : buyName}</span>
+            </div>
+            {errors.ratio && <span className="mt-1 block text-base text-bad">{errors.ratio}</span>}
+            {ratioMilli && (
+              <p className="mt-2 text-base text-muted">
+                {t("meaning")} ١ {dir === "buy" ? storeName : buyName} = {formatQty(reverseRatio(ratioMilli))} {dir === "buy" ? buyName : storeName}
+              </p>
+            )}
+          </div>
+        )}
         <Field label={`${t("defaultSellPrice")} (${t("currency")})`} error={errors.price}>
           <MoneyInput value={price} onChange={setPrice} />
         </Field>
@@ -171,57 +233,6 @@ export function ItemForm({
             </Button>
           )}
         </div>
-      </form>
-    </Modal>
-  );
-}
-
-/* ---------- receive goods ---------- */
-
-export function ReceiveForm({ item, onSaved, onClose }: { item: Item; onSaved: () => void; onClose: () => void }) {
-  const { t } = useI18n();
-  const [qty, setQty] = useState("");
-  const [price, setPrice] = useState<number | null>(item.last_buy_price);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
-  const q = parseQty(qty);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return; // Enter pressed twice must not receive the goods twice
-    const err: Record<string, string> = {};
-    if (!q) err.qty = t("invalidNumber");
-    if (!price || price <= 0) err.price = t("invalidNumber");
-    setErrors(err);
-    if (Object.keys(err).length) return;
-    setBusy(true);
-    try {
-      await db.receive(item.id, q as number, price as number);
-      onSaved();
-    } catch {
-      setErrors({ form: t("error") });
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Modal title={`${t("receive")}: ${item.name}`} onClose={onClose}>
-      <form onSubmit={submit}>
-        <Field label={`${t("qty")} (${item.unit_name})`} error={errors.qty}>
-          <input className={inputCls} inputMode="decimal" autoFocus value={qty} onChange={(e) => setQty(e.target.value)} />
-        </Field>
-        <Field label={`${t("buyPrice")} (${t("currency")} / ${item.unit_name})`} error={errors.price}>
-          <MoneyInput value={price} onChange={setPrice} />
-        </Field>
-        {q && (
-          <div className="mb-4 rounded-2xl bg-olive-l p-4 text-olive-d">
-            {t("newOnHand")}: <b>{formatQty(item.on_hand_milli + q)} {item.unit_name}</b>
-          </div>
-        )}
-        {errors.form && <p className="mb-3 text-bad">{errors.form}</p>}
-        <Button type="submit" disabled={busy} className="w-full">
-          {t("save")}
-        </Button>
       </form>
     </Modal>
   );
@@ -319,7 +330,12 @@ export function DeliveriesModal({ item, onChanged, onClose }: { item: Item; onCh
                     </td>
                     <td className="p-2 font-bold">{formatNumber(d.buy_price)}</td>
                     <td className="whitespace-nowrap p-2 text-end no-underline">
-                      {dead ? (
+                      {d.purchase_id !== null ? (
+                        // a purchase line: changed by editing the purchase (Purchases page)
+                        <span className="rounded-full bg-olive-l px-3 py-1 text-sm font-bold text-olive-d">
+                          {t("purchaseNo")} {formatNumber(d.purchase_id)}
+                        </span>
+                      ) : dead ? (
                         <span className="rounded-full bg-bad-l px-3 py-1 text-sm font-bold text-bad no-underline">{t("cancelled")}</span>
                       ) : (
                         <>

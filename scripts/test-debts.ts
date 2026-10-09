@@ -38,7 +38,7 @@ await debts.voidPayment(lastB.id); // twice is harmless
 eq("cancelling twice changes nothing", (await debts.listDebtors())[0].debt, 50000);
 
 // editing a sale cannot make it cheaper than what was already received
-await throws("edit below received money is refused", () => sales.updateSale(A, { client_name: "Aso", paid: 20000, lines: [{ item_id: item, qty_milli: 60000, unit_price: 1000 }] }), "overpaid");
+await throws("edit below received money is refused", () => sales.updateSale(A, { client_name: "Aso", paid: 20000, lines: [{ item_id: item, qty_milli: 100000, unit_price: 600 }] }), "overpaid");
 await sales.updateSale(A, { client_name: "Aso", paid: 20000, lines: [{ item_id: item, qty_milli: 100000, unit_price: 1000 }] });
 eq("edit with later payments keeps them", (await sales.getSale(A))!.later_paid, 80000);
 

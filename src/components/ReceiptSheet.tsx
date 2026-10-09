@@ -1,4 +1,5 @@
 import logo from "@/assets/logo.png";
+import { SheetFooter } from "@/components/SheetFooter";
 import { useI18n } from "@/i18n";
 import { formatDateTime, formatNumber, toArabicDigits } from "@/lib/format";
 import type { Receipt } from "@/data/debts";
@@ -10,7 +11,7 @@ export function ReceiptSheet({ receipt }: { receipt: Receipt }) {
   const label = "text-[#6b7565]";
 
   return (
-    <div dir="rtl" className="invoice-sheet bg-white p-10 text-[15px] leading-relaxed text-[#1f2a1a]">
+    <div dir="rtl" className="invoice-sheet flex flex-col bg-white p-10 text-[15px] leading-relaxed text-[#1f2a1a]">
       <header className="flex items-center justify-between gap-6 border-b-4 border-olive pb-5">
         <div className="flex items-center gap-4">
           <img src={logo} alt="" className="size-20" />
@@ -34,6 +35,11 @@ export function ReceiptSheet({ receipt }: { receipt: Receipt }) {
       <div className="my-6 text-xl">
         <span className={label}>{isIn ? t("receivedFrom") : t("paidBackTo")}: </span>
         <b>{receipt.client_name}</b>
+        {receipt.client_phone && (
+          <span className="ms-6 text-[#6b7565]">
+            {t("phone")}: <b dir="ltr" className="text-[#1f2a1a]">{receipt.client_phone}</b>
+          </span>
+        )}
       </div>
 
       <div className="flex items-center justify-between rounded-lg bg-[#e8f0dc] px-5 py-4 text-2xl font-extrabold text-[#385220]">
@@ -64,6 +70,7 @@ export function ReceiptSheet({ receipt }: { receipt: Receipt }) {
         <div className="flex-1 border-t border-[#1f2a1a] pt-2 text-center">{t("signReceiver")}</div>
         <div className="flex-1 border-t border-[#1f2a1a] pt-2 text-center">{t("signClient")}</div>
       </div>
+      <SheetFooter />
     </div>
   );
 }

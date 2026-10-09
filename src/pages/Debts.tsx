@@ -1,37 +1,55 @@
 import { useCallback, useEffect, useState } from "react";
-import { Ban, Printer, Undo2, Wallet } from "lucide-react";
+import { Ban, Phone, Printer, Undo2, Wallet } from "lucide-react";
 import { useI18n } from "@/i18n";
-import { Button, ConfirmModal, Field, Modal, MoneyInput, PAGE_SIZE, ShowMore } from "@/components/ui";
+import { Button, Chip, ConfirmModal, Modal, PAGE_SIZE, SearchBox, ShowMore } from "@/components/ui";
 import { ReceiptModal } from "@/components/ReceiptModal";
 import { StatementModal } from "@/components/StatementModal";
-import { formatDate, formatDateTime, formatNumber } from "@/lib/format";
+import { formatDate, formatDateTime, formatNumber, matchPerson } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import * as debts from "@/data/debts";
 import type { ClientSale, Debtor, PaymentRow, Receipt, RefundDue } from "@/data/debts";
+import SupplierDebts from "./SupplierDebts";
+import { AmountModal, Stat } from "@/components/AmountModal";
+
+type Who = { id: number; name: string; phone: string | null };
 
 type Dialog =
-  | { kind: "pay"; client: { id: number; name: string }; max: number }
-  | { kind: "refund"; client: { id: number; name: string }; max: number }
-  | { kind: "detail"; client: { id: number; name: string } }
-  | { kind: "statement"; client: { id: number; name: string } }
+  | { kind: "pay"; client: Who; max: number }
+  | { kind: "refund"; client: Who; max: number }
+  | { kind: "detail"; client: Who }
+  | { kind: "statement"; client: Who }
   | null;
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "bad" | "warn" }) {
+
+/** Two parts: what clients owe us, and what we owe suppliers. */
+export default function Debts() {
+  const { t } = useI18n();
+  const [part, setPart] = useState<"clients" | "suppliers">("clients");
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm">
-      <div className="text-muted">{label}</div>
-      <div className={`mt-1 text-3xl font-extrabold ${tone === "bad" ? "text-bad" : tone === "warn" ? "text-warn" : ""}`}>{value}</div>
+    <div>
+      <h1 className="mb-1 text-3xl font-extrabold">{t("debts")}</h1>
+      <p className="mb-5 text-muted">{t("debtsSub")}</p>
+      <div className="mb-5 flex gap-2.5">
+        <Chip active={part === "clients"} onClick={() => setPart("clients")}>
+          {t("clientsTab")}
+        </Chip>
+        <Chip active={part === "suppliers"} onClick={() => setPart("suppliers")}>
+          {t("suppliersTab")}
+        </Chip>
+      </div>
+      {part === "clients" ? <ClientDebts /> : <SupplierDebts />}
     </div>
   );
 }
 
-export default function Debts() {
+function ClientDebts() {
   const { t } = useI18n();
   const [debtors, setDebtors] = useState<Debtor[]>([]);
   const [refunds, setRefunds] = useState<RefundDue[]>([]);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [shown, setShown] = useState(PAGE_SIZE); // debtors drawn so far (the totals above always use all of them)
+  const [query, setQuery] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
@@ -52,6 +70,7 @@ export default function Debts() {
   }, [reload]);
 
   const totalDebt = debtors.reduce((s, d) => s + d.debt, 0);
+  const found = debtors.filter((d) => matchPerson(query, d.name, d.sale_ids, d.phone));
   const totalRefund = refunds.reduce((s, r) => s + r.due, 0);
   const close = () => setDialog(null);
   // after a payment/refund: refresh the lists and show its receipt right away
@@ -63,9 +82,6 @@ export default function Debts() {
 
   return (
     <div>
-      <h1 className="mb-1 text-3xl font-extrabold">{t("debts")}</h1>
-      <p className="mb-6 text-muted">{t("debtsSub")}</p>
-
       <div className={`mb-6 grid gap-4 ${refunds.length ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
         <Stat label={t("totalDebt")} value={`${formatNumber(totalDebt)} ${t("currency")}`} tone={totalDebt > 0 ? "bad" : undefined} />
         <Stat label={t("debtorsCount")} value={formatNumber(debtors.length)} />
@@ -74,9 +90,11 @@ export default function Debts() {
 
       {loadError && <p className="mb-4 rounded-2xl bg-bad-l p-4 text-bad">{t("error")}</p>}
 
+      {debtors.length > 0 && <SearchBox value={query} onChange={setQuery} placeholder={t("searchClients")} />}
+
       <div className="overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
-        {loaded && debtors.length === 0 ? (
-          <p className="p-10 text-center text-lg text-muted">{t("noDebts")}</p>
+        {loaded && found.length === 0 ? (
+          <p className="p-10 text-center text-lg text-muted">{debtors.length === 0 ? t("noDebts") : t("noMatch")}</p>
         ) : (
           <table className="w-full">
             <thead>
@@ -88,12 +106,17 @@ export default function Debts() {
               </tr>
             </thead>
             <tbody>
-              {debtors.slice(0, shown).map((d) => (
+              {found.slice(0, shown).map((d) => (
                 <tr key={d.client_id} className="border-t border-line hover:bg-bg/60">
                   <td className="p-3">
-                    <button className="font-bold hover:underline" onClick={() => setDialog({ kind: "detail", client: { id: d.client_id, name: d.name } })}>
+                    <button className="font-bold hover:underline" onClick={() => setDialog({ kind: "detail", client: { id: d.client_id, name: d.name, phone: d.phone } })}>
                       {d.name}
                     </button>
+                    {d.phone && (
+                      <span dir="ltr" className="mt-0.5 flex items-center justify-end gap-1 text-sm text-muted">
+                        {d.phone} <Phone className="size-3.5" />
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 text-muted">{formatDate(d.last_sale_at)}</td>
                   <td className="p-3 text-lg font-extrabold text-bad">
@@ -105,11 +128,11 @@ export default function Debts() {
                       variant="ghost"
                       title={t("statementBtn")}
                       aria-label={t("statementBtn")}
-                      onClick={() => setDialog({ kind: "statement", client: { id: d.client_id, name: d.name } })}
+                      onClick={() => setDialog({ kind: "statement", client: { id: d.client_id, name: d.name, phone: d.phone } })}
                     >
                       <Printer className="size-5" />
                     </Button>{" "}
-                    <Button small onClick={() => setDialog({ kind: "pay", client: { id: d.client_id, name: d.name }, max: d.debt })}>
+                    <Button small onClick={() => setDialog({ kind: "pay", client: { id: d.client_id, name: d.name, phone: d.phone }, max: d.debt })}>
                       <Wallet className="size-4" /> {t("payDebt")}
                     </Button>
                   </td>
@@ -118,7 +141,7 @@ export default function Debts() {
             </tbody>
           </table>
         )}
-        {debtors.length > shown && <ShowMore onClick={() => setShown((n) => n + PAGE_SIZE)} />}
+        {found.length > shown && <ShowMore onClick={() => setShown((n) => n + PAGE_SIZE)} />}
       </div>
 
       {refunds.length > 0 && (
@@ -128,10 +151,10 @@ export default function Debts() {
           <div className="overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
             <table className="w-full">
               <tbody>
-                {refunds.map((r) => (
+                {refunds.filter((r) => matchPerson(query, r.name, "", r.phone)).map((r) => (
                   <tr key={r.client_id} className="border-t border-line first:border-0">
                     <td className="p-3">
-                      <button className="font-bold hover:underline" onClick={() => setDialog({ kind: "detail", client: { id: r.client_id, name: r.name } })}>
+                      <button className="font-bold hover:underline" onClick={() => setDialog({ kind: "detail", client: { id: r.client_id, name: r.name, phone: r.phone } })}>
                         {r.name}
                       </button>
                     </td>
@@ -139,7 +162,7 @@ export default function Debts() {
                       {formatNumber(r.due)} {t("currency")}
                     </td>
                     <td className="whitespace-nowrap p-3 text-end">
-                      <Button small variant="secondary" onClick={() => setDialog({ kind: "refund", client: { id: r.client_id, name: r.name }, max: r.due })}>
+                      <Button small variant="secondary" onClick={() => setDialog({ kind: "refund", client: { id: r.client_id, name: r.name, phone: r.phone }, max: r.due })}>
                         <Undo2 className="size-4" /> {t("refund")}
                       </Button>
                     </td>
@@ -151,8 +174,30 @@ export default function Debts() {
         </section>
       )}
 
-      {dialog?.kind === "pay" && <AmountModal mode="payment" {...dialog} onDone={done} onClose={close} />}
-      {dialog?.kind === "refund" && <AmountModal mode="refund" {...dialog} onDone={done} onClose={close} />}
+      {dialog?.kind === "pay" && (
+        <AmountModal
+          title={`${t("payDebt")}: ${dialog.client.name}`}
+          dueLabel={t("debt")}
+          amountLabel={t("payAmount")}
+          hint={t("payHint")}
+          max={dialog.max}
+          submit={(amount) => debts.recordPayment(dialog.client.id, amount)}
+          onDone={done}
+          onClose={close}
+        />
+      )}
+      {dialog?.kind === "refund" && (
+        <AmountModal
+          title={`${t("refund")}: ${dialog.client.name}`}
+          dueLabel={t("refundDueTag")}
+          amountLabel={t("refundAmount")}
+          hint={t("payHint")}
+          max={dialog.max}
+          submit={(amount) => debts.recordRefund(dialog.client.id, amount)}
+          onDone={done}
+          onClose={close}
+        />
+      )}
       {dialog?.kind === "detail" && <DetailModal client={dialog.client} onChanged={() => void reload()} onClose={close} />}
       {dialog?.kind === "statement" && <StatementModal clientId={dialog.client.id} onClose={close} />}
       {receipt && <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />}
@@ -160,67 +205,13 @@ export default function Debts() {
   );
 }
 
-function AmountModal({
-  mode,
-  client,
-  max,
-  onDone,
-  onClose,
-}: {
-  mode: "payment" | "refund";
-  client: { id: number; name: string };
-  max: number;
-  onDone: (receipt: Receipt) => void;
-  onClose: () => void;
-}) {
-  const { t } = useI18n();
-  const errorText = useErrorText();
-  const [amount, setAmount] = useState<number | null>(max);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const valid = !!amount && amount > 0 && amount <= max;
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!valid || busy) return;
-    setBusy(true);
-    try {
-      onDone(await (mode === "payment" ? debts.recordPayment(client.id, amount as number) : debts.recordRefund(client.id, amount as number)));
-    } catch (err) {
-      setError(errorText(err));
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Modal title={`${mode === "payment" ? t("payDebt") : t("refund")}: ${client.name}`} onClose={onClose}>
-      <form onSubmit={submit}>
-        <div className="mb-4 rounded-2xl bg-olive-l p-4 text-olive-d">
-          {mode === "payment" ? t("debt") : t("refundDueTag")}: <b>{formatNumber(max)} {t("currency")}</b>
-        </div>
-        <Field label={`${mode === "payment" ? t("payAmount") : t("refundAmount")} (${t("currency")})`} error={amount !== null && amount > max ? t("moreThanDue") : error}>
-          <MoneyInput value={amount} onChange={setAmount} autoFocus />
-        </Field>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <p className="text-base text-muted">{t("payHint")}</p>
-          <Button type="button" small variant="ghost" onClick={() => setAmount(max)}>
-            {t("payAllBtn")}
-          </Button>
-        </div>
-        <Button type="submit" disabled={!valid || busy} className="w-full">
-          {t("save")}
-        </Button>
-      </form>
-    </Modal>
-  );
-}
 
 function DetailModal({
   client,
   onChanged,
   onClose,
 }: {
-  client: { id: number; name: string };
+  client: Who;
   onChanged: () => void;
   onClose: () => void;
 }) {
@@ -304,7 +295,7 @@ function DetailModal({
                       <span className="rounded-full bg-bad-l px-3 py-0.5 text-sm font-bold text-bad">{t("cancelled")}</span>
                     ) : (
                       <>
-                        <Button small variant="ghost" onClick={() => setReceipt(debts.receiptFromRows(client.name, p, pays))}>
+                        <Button small variant="ghost" onClick={() => setReceipt(debts.receiptFromRows(client, p, pays))}>
                           <Printer className="size-4" />
                         </Button>{" "}
                         <Button small variant="danger" onClick={() => setVoiding(p.id)}>

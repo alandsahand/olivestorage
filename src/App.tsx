@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 import { HashRouter, NavLink, Route, Routes } from "react-router-dom";
-import { BarChart3, HardDrive, Lock, Package, Receipt, ShoppingCart, Zap, type LucideIcon } from "lucide-react";
+import { BarChart3, HardDrive, Lock, Package, Receipt, ShoppingCart, Store, Truck, Zap, type LucideIcon } from "lucide-react";
 import { useI18n, type Key } from "@/i18n";
 import { checkDb } from "@/db";
 import Stock from "@/pages/Stock";
 import Sell from "@/pages/Sell";
+import Purchases from "@/pages/Purchases";
 import Debts from "@/pages/Debts";
 import Costs from "@/pages/Costs";
 import Dashboard from "@/pages/Dashboard";
 import { BackupModal } from "@/components/BackupModal";
+import { FirstStart, ShopInfoModal } from "@/components/ShopInfo";
+import { useShop } from "@/shop";
 
 type Page = { path: string; key: Key; icon: LucideIcon; locked?: boolean };
 
 const pages: Page[] = [
   { path: "/", key: "sell", icon: ShoppingCart },
+  { path: "/purchases", key: "purchases", icon: Truck },
   { path: "/stock", key: "stock", icon: Package },
   { path: "/debts", key: "debts", icon: Receipt },
   { path: "/costs", key: "costs", icon: Zap },
@@ -50,6 +54,7 @@ function Placeholder({ title }: { title: Key }) {
 function Sidebar() {
   const { t, lang, setLang } = useI18n();
   const [backupOpen, setBackupOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
   return (
     <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col gap-2 bg-olive-d p-4 text-white">
       <div className="flex items-center gap-3 px-3 pb-6 pt-1 text-2xl font-extrabold">
@@ -74,6 +79,13 @@ function Sidebar() {
       ))}
       <div className="flex-1" />
       <button
+        onClick={() => setShopOpen(true)}
+        className="flex items-center gap-3 rounded-2xl px-4 py-3 text-olive-l transition hover:bg-white/10"
+      >
+        <Store className="size-5" />
+        {t("shopInfo")}
+      </button>
+      <button
         onClick={() => setBackupOpen(true)}
         className="flex items-center gap-3 rounded-2xl px-4 py-3 text-olive-l transition hover:bg-white/10"
       >
@@ -92,11 +104,15 @@ function Sidebar() {
         ))}
       </div>
       {backupOpen && <BackupModal onClose={() => setBackupOpen(false)} />}
+      {shopOpen && <ShopInfoModal onClose={() => setShopOpen(false)} />}
     </aside>
   );
 }
 
 export default function App() {
+  const shop = useShop();
+  if (!shop.loaded) return null;
+  if (!shop.setupDone) return <FirstStart />; // once, the first time the app opens
   return (
     <HashRouter>
       <div className="flex min-h-screen">
@@ -112,6 +128,8 @@ export default function App() {
                     <Stock />
                   ) : p.path === "/" ? (
                     <Sell />
+                  ) : p.path === "/purchases" ? (
+                    <Purchases />
                   ) : p.path === "/debts" ? (
                     <Debts />
                   ) : p.path === "/costs" ? (

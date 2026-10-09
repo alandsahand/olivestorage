@@ -355,7 +355,7 @@ function DashboardView({ onLock }: { onLock: () => void }) {
             <Stat label={t("statCosts")} value={data.costs} />
             <Stat label={t("statNet")} value={data.net} hint={t("afterCosts")} tone={data.net >= 0 ? "good" : "bad"} />
           </div>
-          <div className="mb-5 grid gap-4 sm:grid-cols-3">
+          <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Stat label={t("statStock")} value={data.stockValue} hint={`${t("byBuyCost")} · ${t("nowLabel")}`} />
             <Stat
               label={t("statDebt")}
@@ -364,6 +364,12 @@ function DashboardView({ onLock }: { onLock: () => void }) {
               tone={data.debt > 0 ? "bad" : undefined}
             />
             <Stat label={t("refundsTotal")} value={data.refundsDue} hint={t("nowLabel")} tone={data.refundsDue > 0 ? "warn" : undefined} />
+            <Stat
+              label={t("statSupplierDebt")}
+              value={data.supplierDebt}
+              hint={`${formatNumber(data.suppliersOwed)} ${t("suppliersOwedCount")} · ${t("nowLabel")}`}
+              tone={data.supplierDebt > 0 ? "bad" : undefined}
+            />
           </div>
 
           <div className="grid items-start gap-5 lg:grid-cols-[1.5fr_1fr]">

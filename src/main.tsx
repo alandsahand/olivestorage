@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { I18nProvider } from "./i18n";
 import { CrashGuard, ErrorBanner } from "./components/ErrorGuard";
+import { ShopProvider } from "./shop";
 import "./index.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
@@ -12,7 +13,9 @@ if (import.meta.env.DEV && location.hash.startsWith("#/__invoice-demo")) {
   const { default: InvoiceDemo } = await import("./dev/InvoiceDemo");
   root.render(
     <I18nProvider>
-      <InvoiceDemo />
+      <ShopProvider>
+        <InvoiceDemo />
+      </ShopProvider>
     </I18nProvider>,
   );
 } else {
@@ -20,7 +23,9 @@ if (import.meta.env.DEV && location.hash.startsWith("#/__invoice-demo")) {
     <React.StrictMode>
       <I18nProvider>
         <CrashGuard>
-          <App />
+          <ShopProvider>
+            <App />
+          </ShopProvider>
         </CrashGuard>
         <ErrorBanner />
       </I18nProvider>

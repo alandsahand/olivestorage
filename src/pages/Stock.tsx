@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { PackagePlus, Pencil, Plus, Search, Settings2, History } from "lucide-react";
+import { Pencil, Plus, Search, Settings2, History } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button, Chip, ConfirmModal, Modal, Field, inputCls } from "@/components/ui";
 import { formatNumber, formatQty, normalizeText } from "@/lib/format";
+import { refText } from "@/lib/units";
 import * as db from "@/data/stock";
 import type { Item, Named } from "@/data/stock";
-import { DeliveriesModal, ItemForm, ManageModal, ReceiveForm } from "./StockModals";
+import { DeliveriesModal, ItemForm, ManageModal } from "./StockModals";
 
 type Dialog =
   | { kind: "item"; item: Item | null }
-  | { kind: "receive"; item: Item }
   | { kind: "deliveries"; item: Item }
   | { kind: "archive"; item: Item }
   | { kind: "manage" }
@@ -138,7 +138,14 @@ export default function Stock() {
             <tbody>
               {shown.map((i) => (
                 <tr key={i.id} className="border-t border-line hover:bg-bg/60">
-                  <td className="p-3 font-bold">{i.name}</td>
+                  <td className="p-3">
+                    <b>{i.name}</b>
+                    {i.buy_unit_name && i.buy_ratio_milli && i.buy_ratio_dir && (
+                      <span className="block text-sm text-muted">
+                        {t("boughtIn")} {i.buy_unit_name} · {refText(i.unit_name, i.buy_unit_name, i.buy_ratio_milli, i.buy_ratio_dir)}
+                      </span>
+                    )}
+                  </td>
                   <td className="hidden p-3 text-muted xl:table-cell">{i.category_name ?? "—"}</td>
                   <td className="p-3 font-bold">
                     {formatQty(i.on_hand_milli)} {i.unit_name}{" "}
@@ -149,9 +156,6 @@ export default function Stock() {
                   <td className="p-3 font-bold">{i.last_buy_price === null ? "—" : formatNumber(i.last_buy_price)}</td>
                   <td className="p-3 font-bold">{formatNumber(i.default_sell_price)}</td>
                   <td className="whitespace-nowrap p-3 text-end">
-                    <Button small onClick={() => setDialog({ kind: "receive", item: i })} title={t("receive")} aria-label={t("receive")}>
-                      <PackagePlus className="size-4" /> <span className="hidden xl:inline">{t("receive")}</span>
-                    </Button>{" "}
                     <Button small variant="ghost" onClick={() => setDialog({ kind: "deliveries", item: i })} title={t("deliveries")} aria-label={t("deliveries")}>
                       <History className="size-5" />
                     </Button>{" "}
@@ -179,7 +183,6 @@ export default function Stock() {
           onArchive={dialog.item ? () => setDialog({ kind: "archive", item: dialog.item as Item }) : undefined}
         />
       )}
-      {dialog?.kind === "receive" && <ReceiveForm item={dialog.item} onSaved={saved} onClose={close} />}
       {dialog?.kind === "deliveries" && (
         <DeliveriesModal item={dialog.item} onChanged={() => void reload()} onClose={close} />
       )}

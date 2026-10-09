@@ -49,11 +49,11 @@ eq("stock/debts are 'now' figures (same in any month)", [prev.stockValue, prev.d
 
 // editing a sale updates the numbers; the cost snapshot is kept even after new deliveries at a new price
 await stock.receive(olives, 50000, 9000);
-await sales.updateSale(A, { client_name: "Aso", paid: 50000, lines: [{ item_id: olives, qty_milli: 30000, unit_price: 7500 }] }); // 225,000
+await sales.updateSale(A, { client_name: "Aso", paid: 50000, lines: [{ item_id: olives, qty_milli: 20000, unit_price: 8000 }] }); // 160,000 (money-only edit)
 const d2 = await getDashboard(cur);
-eq("after edit: sales", d2.sales, 229000);
-eq("after edit: cost of the 30 kg keeps the 5,800 snapshot", d2.cogs, 30 * 5800 + 400);
-eq("after edit: gross profit", d2.gross, 229000 - 30 * 5800 - 400);
+eq("after edit: sales", d2.sales, 164000);
+eq("after edit: cost of the 20 kg keeps the 5,800 snapshot", d2.cogs, 20 * 5800 + 400);
+eq("after edit: gross profit", d2.gross, 164000 - 20 * 5800 - 400);
 
 const empty = await getDashboard("2020-01");
 eq("a month with no activity is all zero", [empty.sales, empty.gross, empty.net, empty.best.length], [0, 0, 0, 0]);

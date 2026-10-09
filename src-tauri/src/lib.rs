@@ -53,6 +53,36 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/007_sales_indexes.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 8,
+            description: "purchases, suppliers and supplier payments",
+            sql: include_str!("../migrations/008_purchases.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 9,
+            description: "buying unit vs storing unit",
+            sql: include_str!("../migrations/009_buy_units.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 10,
+            description: "client phone number",
+            sql: include_str!("../migrations/010_client_phone.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 11,
+            description: "discount on a sale",
+            sql: include_str!("../migrations/011_sale_discount.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 12,
+            description: "returns of sold goods",
+            sql: include_str!("../migrations/012_sale_returns.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

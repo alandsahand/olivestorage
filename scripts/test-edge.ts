@@ -8,6 +8,7 @@ import * as debts from "../src/data/debts.ts";
 import { getDashboard } from "../src/data/dashboard.ts";
 import { currentMonth } from "../src/lib/months.ts";
 import { parseMoney, parseQty } from "../src/lib/format.ts";
+import { matchPerson } from "../src/lib/format.ts";
 
 const kg = await stock.addUnit("kg");
 const olives = await stock.saveItem({ name: "Olives", category_id: null, unit_id: kg, default_sell_price: 1000 });
@@ -127,5 +128,20 @@ eq("money: empty", parseMoney(""), null);
 eq("qty: Kurdish decimal", parseQty("٢٫٥"), 2500);
 eq("qty: too small to count is refused", parseQty("0.0001"), null);
 eq("qty: zero is refused", parseQty("0"), null);
+
+/* ---------- searching debts ---------- */
+
+eq("search: empty finds everyone", matchPerson("", "Aso", "3"), true);
+eq("search: part of the name", matchPerson("as", "Aso Mohammed", ""), true);
+eq("search: Arabic and Kurdish letter variants are the same", matchPerson("كريم", "کریم", ""), true);
+eq("search: exact sale number", matchPerson("12", "Aso", "3,12"), true);
+eq("search: Kurdish digits", matchPerson("١٢", "Aso", "3,12"), true);
+eq("search: 1 does not find sales 10, 11, 12", matchPerson("1", "Aso", "10,11,12"), false);
+eq("search: part of a phone number, spaces ignored", matchPerson("0750123", "Hawler", "", "0750 123 4567"), true);
+eq("search: no match", matchPerson("xyz", "Aso", "3", "0750"), false);
+const oweSale = await sales.createSale({ client_name: "Rawand", paid: 0, lines: [{ item_id: olives, qty_milli: 1000, unit_price: 1000 }] });
+await sales.createSale({ client_name: "Rawand", paid: 1000, lines: [{ item_id: olives, qty_milli: 1000, unit_price: 1000 }] }); // paid in full
+const debtorsNow = await debts.listDebtors();
+eq("debtors list carries only the sale numbers that still owe", debtorsNow.find((x) => x.name === "Rawand")!.sale_ids, String(oweSale));
 
 finish();

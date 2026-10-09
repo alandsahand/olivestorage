@@ -1,4 +1,5 @@
 import logo from "@/assets/logo.png";
+import { SheetFooter } from "@/components/SheetFooter";
 import { useI18n } from "@/i18n";
 import { formatDate, formatDateTime, formatNumber, toArabicDigits } from "@/lib/format";
 import type { Statement } from "@/data/debts";
@@ -11,7 +12,7 @@ export function StatementSheet({ statement }: { statement: Statement }) {
   const cur = ` (${t("currency")})`;
 
   return (
-    <div dir="rtl" className="invoice-sheet bg-white p-10 text-[15px] leading-relaxed text-[#1f2a1a]">
+    <div dir="rtl" className="invoice-sheet flex flex-col bg-white p-10 text-[15px] leading-relaxed text-[#1f2a1a]">
       <header className="flex items-center justify-between gap-6 border-b-4 border-olive pb-5">
         <div className="flex items-center gap-4">
           <img src={logo} alt="" className="size-20" />
@@ -29,6 +30,11 @@ export function StatementSheet({ statement }: { statement: Statement }) {
       <div className="my-5 text-lg">
         <span className="text-[#6b7565]">{t("client")}: </span>
         <b>{statement.client_name}</b>
+        {statement.client_phone && (
+          <span className="ms-6 text-[#6b7565]">
+            {t("phone")}: <b dir="ltr" className="text-[#1f2a1a]">{statement.client_phone}</b>
+          </span>
+        )}
       </div>
 
       <table className="w-full border-collapse">
@@ -79,6 +85,7 @@ export function StatementSheet({ statement }: { statement: Statement }) {
           </div>
         )}
       </div>
+      <SheetFooter />
     </div>
   );
 }

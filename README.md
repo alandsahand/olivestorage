@@ -26,6 +26,14 @@ npm run tauri build
 
 The installer is created at `src-tauri/target/release/bundle/nsis/عالم طرشي والزيتون_<version>_x64-setup.exe`. Copy that one file to the shop PC and run it (installs for the current user, no admin needed; Windows 11 already has WebView2).
 
+### Updating a PC that already has the app
+
+Installing a newer version over the old one is an update: the data (in `%APPDATA%\com.olivestorage.app\`, not in the program folder) stays, and the app upgrades its database by itself on the first start.
+
+1. In the app: **Backup -> back up now** (the automatic start-up backup runs at most once every 6 hours).
+2. Close the app, then run the new installer.
+3. Never install an OLDER version over a newer one: the older program cannot open the newer database and will not start. If that happens, install the newest version again (no data is lost).
+
 ## Invoices (print / PDF)
 
 On the Sell screen, a saved sale (or any sale in the sales list) has a **Print / PDF** button. It shows a preview of the invoice (logo, shop name, client, table of materials, totals, notes). The button opens the Windows print dialog: choose a printer to print on paper, or **Microsoft Print to PDF / Save as PDF** to save a PDF file.

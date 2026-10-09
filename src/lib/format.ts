@@ -52,6 +52,20 @@ export function formatDateTime(iso: string): string {
   return toArabicDigits(`${d.toLocaleDateString("en-GB")} ${time}`);
 }
 
+/**
+ * Debts search: matches the name (letter variants unified), part of a phone number, or EXACTLY one of the
+ * sale/purchase numbers in `ids` ("3,7,12"), so typing 1 does not also find 10, 11, 12 ...
+ */
+export function matchPerson(query: string, name: string, ids: string, phone?: string | null): boolean {
+  const q = normalizeText(query);
+  if (!q) return true;
+  if (normalizeText(name).includes(q)) return true;
+  const digits = toLatinDigits(query).replace(/[^0-9]/g, "");
+  if (!digits) return false;
+  if (phone && toLatinDigits(phone).replace(/[^0-9]/g, "").includes(digits)) return true;
+  return ids.split(",").includes(digits);
+}
+
 /** Search-friendly form: lowercase, no diacritics, Arabic/Kurdish letter variants unified. */
 export function normalizeText(s: string): string {
   return s
