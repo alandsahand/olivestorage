@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Copy, KeyRound, Lock, ShieldCheck } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button, Field, Modal, inputCls } from "@/components/ui";
-import { formatNumber, toArabicDigits } from "@/lib/format";
+import { formatNumber, onlyDigits, toArabicDigits } from "@/lib/format";
 import { currentMonth, shiftMonth } from "@/lib/months";
 import * as auth from "@/data/auth";
 import { getDashboard } from "@/data/dashboard";
@@ -21,7 +21,7 @@ function PinInput({ value, onChange, autoFocus }: { value: string; onChange: (v:
       dir="ltr"
       className={`${inputCls} text-center text-3xl tracking-[0.5em]`}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChange(onlyDigits(e.target.value))}
     />
   );
 }

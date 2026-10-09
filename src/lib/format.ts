@@ -20,6 +20,27 @@ export function parseMoney(s: string): number | null {
   return digits ? parseInt(digits, 10) : null;
 }
 
+// Typing filters: number boxes keep only what belongs in them, so a letter or symbol never shows up there.
+const DIGIT = /[0-9٠-٩۰-۹]/;
+
+/** Quantity / percent boxes: digits (Latin, Kurdish/Arabic, Persian) and ONE decimal mark. */
+export function onlyDecimal(s: string): string {
+  let mark = false;
+  return [...s]
+    .filter((ch) => {
+      if (DIGIT.test(ch)) return true;
+      if (/[.,٫،]/.test(ch) && !mark) return (mark = true);
+      return false;
+    })
+    .join("");
+}
+
+/** Phone boxes: digits, spaces, + and - only. */
+export const onlyPhone = (s: string) => s.replace(/[^0-9٠-٩۰-۹+\-\s]/g, "");
+
+/** PIN boxes: digits only. */
+export const onlyDigits = (s: string) => s.replace(/[^0-9٠-٩۰-۹]/g, "");
+
 /** "2.5" / "2,5" / "٢٫٥" -> 2500. Returns null if empty, zero or invalid. */
 export function parseQty(s: string): number | null {
   const clean = toLatinDigits(s).replace(/[٫,،]/g, ".").replace(/[^0-9.]/g, "");

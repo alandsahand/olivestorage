@@ -8,7 +8,7 @@ import * as debts from "../src/data/debts.ts";
 import { getDashboard } from "../src/data/dashboard.ts";
 import { currentMonth } from "../src/lib/months.ts";
 import { parseMoney, parseQty } from "../src/lib/format.ts";
-import { matchPerson } from "../src/lib/format.ts";
+import { matchPerson, onlyDecimal, onlyDigits, onlyPhone } from "../src/lib/format.ts";
 
 const kg = await stock.addUnit("kg");
 const olives = await stock.saveItem({ name: "Olives", category_id: null, unit_id: kg, default_sell_price: 1000 });
@@ -143,5 +143,15 @@ const oweSale = await sales.createSale({ client_name: "Rawand", paid: 0, lines: 
 await sales.createSale({ client_name: "Rawand", paid: 1000, lines: [{ item_id: olives, qty_milli: 1000, unit_price: 1000 }] }); // paid in full
 const debtorsNow = await debts.listDebtors();
 eq("debtors list carries only the sale numbers that still owe", debtorsNow.find((x) => x.name === "Rawand")!.sale_ids, String(oweSale));
+
+/* ---------- number boxes only take numbers ---------- */
+
+eq("quantity box: letters and symbols are dropped", onlyDecimal("12a.5kg!"), "12.5");
+eq("quantity box: Kurdish digits and the Kurdish decimal mark stay", onlyDecimal("٢٫٥"), "٢٫٥");
+eq("quantity box: only ONE decimal mark", onlyDecimal("1.2.3"), "1.23");
+eq("quantity box: a minus sign is dropped (no negative amounts)", onlyDecimal("-5"), "5");
+eq("phone box: digits, spaces, + and - stay, letters go", onlyPhone("+964 750-123abc"), "+964 750-123");
+eq("phone box: Kurdish digits stay", onlyPhone("٠٧٥٠ ١٢٣"), "٠٧٥٠ ١٢٣");
+eq("PIN box: digits only", onlyDigits("12a4 ٥"), "124٥");
 
 finish();

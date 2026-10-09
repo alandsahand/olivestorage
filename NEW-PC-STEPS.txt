@@ -103,7 +103,7 @@ ONLY THE SHOP PC (to just USE the app, no programming)
   olivestorage\src-tauri\target\release\ ):
 
     A) olivestorage.exe                                 -> double-click, no install
-    B) bundle\nsis\عالم طرشي والزيتون_0.11.0_x64-setup.exe  -> installer
+    B) bundle\nsis\عالم طرشي والزيتون_0.11.1_x64-setup.exe  -> installer
 
   (These files are NOT on GitHub. On a PC with the full setup you can
    make them again with:   npm run tauri build )

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ban, Check, Pencil, Phone, Plus, RotateCcw, Search, Trash2, Truck, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button, Chip, ConfirmModal, MoneyInput, PAGE_SIZE, ShowMore, inputCls } from "@/components/ui";
-import { formatDateTime, formatNumber, formatQty, normalizeText, parseMoney, parseQty, qtyText } from "@/lib/format";
+import { formatDateTime, formatNumber, formatQty, normalizeText, onlyDecimal, onlyPhone, parseMoney, parseQty, qtyText } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import { splitCosts } from "@/lib/purchaseMath";
 import { refText, storedFromBought, type RatioDir } from "@/lib/units";
@@ -314,7 +314,7 @@ function PurchaseForm({
             <span className="mb-1.5 flex items-center gap-2 font-bold">
               <Phone className="size-5 text-olive" /> {t("phoneOptional")}
             </span>
-            <input className={inputCls} dir="ltr" inputMode="tel" maxLength={40} value={phone} onChange={(e) => { setPhone(e.target.value); setPhoneAuto(false); }} />
+            <input className={inputCls} dir="ltr" inputMode="tel" maxLength={40} value={phone} onChange={(e) => { setPhone(onlyPhone(e.target.value)); setPhoneAuto(false); }} />
           </label>
         </div>
 
@@ -352,7 +352,7 @@ function PurchaseForm({
                         <span className="mb-1 block text-sm text-muted">
                           {t("qty")} ({l.buyUnit})
                         </span>
-                        <input className={`${inputCls} !px-2 text-center font-extrabold`} inputMode="decimal" value={l.bought} onChange={(e) => setBought(ix, e.target.value)} />
+                        <input className={`${inputCls} !px-2 text-center font-extrabold`} inputMode="decimal" value={l.bought} onChange={(e) => setBought(ix, onlyDecimal(e.target.value))} />
                       </label>
                     )}
                     <label className="block">
@@ -364,7 +364,7 @@ function PurchaseForm({
                         className={`${inputCls} !px-2 text-center font-extrabold`}
                         inputMode="decimal"
                         value={l.qty}
-                        onChange={(e) => patch(ix, { qty: e.target.value, fixed: null, storedTouched: true })}
+                        onChange={(e) => patch(ix, { qty: onlyDecimal(e.target.value), fixed: null, storedTouched: true })}
                       />
                       {conv && (
                         <span className="mt-0.5 block text-center text-sm text-muted">

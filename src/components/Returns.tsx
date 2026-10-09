@@ -5,7 +5,7 @@ import logo from "@/assets/logo.png";
 import { useI18n } from "@/i18n";
 import { Button, Modal, inputCls } from "@/components/ui";
 import { SheetFooter } from "@/components/SheetFooter";
-import { formatDateTime, formatNumber, formatQty, parseQty, toArabicDigits } from "@/lib/format";
+import { formatDateTime, formatNumber, formatQty, onlyDecimal, parseQty, toArabicDigits } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import { getSale, moneyOf, type SaleDetail } from "@/data/sales";
 import { createReturn, getReturnable, returnValue, type Returnable, type SaleReturn } from "@/data/returns";
@@ -99,7 +99,7 @@ export function ReturnModal({ saleId, onDone, onClose }: { saleId: number; onDon
                     disabled={r.left <= 0}
                     aria-label={`${t("returnNow")} ${r.item_name}`}
                     value={qty[r.item_id] ?? ""}
-                    onChange={(e) => setQty((m) => ({ ...m, [r.item_id]: e.target.value }))}
+                    onChange={(e) => setQty((m) => ({ ...m, [r.item_id]: onlyDecimal(e.target.value) }))}
                   />
                   <span className={`mt-0.5 block text-sm ${r.tooMuch ? "font-bold text-bad" : "text-muted"}`}>
                     {r.tooMuch ? t("tooMuchReturned") : `${t("leftToReturn")}: ${formatQty(r.left)}`}

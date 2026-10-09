@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Pencil, Plus, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button, ConfirmModal, Field, MoneyInput, Modal, inputCls } from "@/components/ui";
-import { formatDateTime, formatNumber, formatQty, parseQty, qtyText } from "@/lib/format";
+import { formatDateTime, formatNumber, formatQty, onlyDecimal, parseQty, qtyText } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import * as db from "@/data/stock";
 import type { Delivery, Item, Named } from "@/data/stock";
@@ -207,7 +207,7 @@ export function ItemForm({
                 inputMode="decimal"
                 aria-label={t("refHow")}
                 value={ratio}
-                onChange={(e) => setRatio(e.target.value)}
+                onChange={(e) => setRatio(onlyDecimal(e.target.value))}
               />
               <span className="whitespace-nowrap">{dir === "buy" ? storeName : buyName}</span>
             </div>
@@ -309,7 +309,7 @@ export function DeliveriesModal({ item, onChanged, onClose }: { item: Item; onCh
                 {editing === d.id ? (
                   <>
                     <td className="p-2">
-                      <input className={inputCls} inputMode="decimal" value={eQty} onChange={(e) => setEQty(e.target.value)} />
+                      <input className={inputCls} inputMode="decimal" value={eQty} onChange={(e) => setEQty(onlyDecimal(e.target.value))} />
                     </td>
                     <td className="p-2">
                       <MoneyInput value={ePrice} onChange={setEPrice} />

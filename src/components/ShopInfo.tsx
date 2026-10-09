@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n";
 import { useShop } from "@/shop";
 import { MAX_SHOP_PHONES } from "@/data/shop";
 import { Button, Modal, inputCls } from "@/components/ui";
+import { onlyPhone } from "@/lib/format";
 
 /** One to three phone boxes with "+ another number" (used by the first-start screen and the shop info dialog). */
 function PhoneFields({ phones, onChange }: { phones: string[]; onChange: (p: string[]) => void }) {
@@ -25,7 +26,7 @@ function PhoneFields({ phones, onChange }: { phones: string[]; onChange: (p: str
               placeholder="07xx xxx xxxx"
               aria-label={`${t("shopPhones")} ${k + 1}`}
               value={p}
-              onChange={(e) => onChange(phones.map((x, i) => (i === k ? e.target.value : x)))}
+              onChange={(e) => onChange(phones.map((x, i) => (i === k ? onlyPhone(e.target.value) : x)))}
             />
             {phones.length > 1 && (
               <button

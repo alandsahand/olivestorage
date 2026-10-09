@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { Ban, Check, Minus, Pencil, Plus, Printer, Search, TriangleAlert, Undo2, X } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { Button, Chip, ConfirmModal, MoneyInput, PAGE_SIZE, ShowMore, inputCls } from "@/components/ui";
-import { formatDateTime, formatNumber, formatQty, normalizeText, parseQty, qtyText } from "@/lib/format";
+import { formatDateTime, formatNumber, formatQty, normalizeText, onlyDecimal, onlyPhone, parseQty, qtyText } from "@/lib/format";
 import { useErrorText } from "@/lib/errors";
 import { InvoiceModal } from "@/components/InvoiceModal";
 import { ReturnModal, ReturnSlipModal } from "@/components/Returns";
@@ -293,7 +293,7 @@ function SaleForm({
               maxLength={40}
               value={clientPhone}
               onChange={(e) => {
-                setClientPhone(e.target.value);
+                setClientPhone(onlyPhone(e.target.value));
                 setPhoneAuto(false);
               }}
             />
@@ -350,7 +350,7 @@ function SaleForm({
                         inputMode="decimal"
                         readOnly={!!editing}
                         value={l.qty}
-                        onChange={(e) => patch(ix, { qty: e.target.value })}
+                        onChange={(e) => patch(ix, { qty: onlyDecimal(e.target.value) })}
                       />
                       <button
                         className="grid size-11 shrink-0 place-items-center rounded-xl border-2 border-line hover:border-olive disabled:opacity-30"
@@ -405,7 +405,7 @@ function SaleForm({
           {discMode === "amount" ? (
             <MoneyInput value={discAmount} onChange={setDiscAmount} />
           ) : (
-            <input className={`${inputCls} text-center`} inputMode="decimal" aria-label={t("discount")} value={discPct} onChange={(e) => setDiscPct(e.target.value)} />
+            <input className={`${inputCls} text-center`} inputMode="decimal" aria-label={t("discount")} value={discPct} onChange={(e) => setDiscPct(onlyDecimal(e.target.value))} />
           )}
           {discProblem && <p className="mt-1 text-base text-bad">{discProblem}</p>}
           {discBelowCost && (
